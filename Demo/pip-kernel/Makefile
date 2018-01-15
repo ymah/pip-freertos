@@ -6,6 +6,13 @@ IMAGE=FreeRTOS.bin
 LINKER=elf_ia32_efi.lds
 MAPFILE=RTOSDemo.map
 
+
+
+
+
+#FreeRTOS library
+
+LIB_FREERTOS=../../libfreertos/include/
 # LibPepin directory
 LIBPIP_ROOT=$(LIBPIP)
 
@@ -82,7 +89,7 @@ ASFLAGS+=-I../../Source/include
 ASFLAGS+= -m32 -Wa,--gdwarf2 -Wa,-march=pentium -c
 
 
-LIBGCC=/usr/lib/gcc/x86_64-pc-linux-gnu/7.2.1/32/
+LIBGCC=/usr/lib/gcc/x86_64-pc-linux-gnu/7.3.1/32/
 # Linker flags
 LDFLAGS=-T$(LINKER) -Map=$(BUILD_DIR)/$(MAPFILE) --gc-sections -L$(LIBGCC) -L$(LIBPIP_LIB) -L$(LIBGCC) -melf_i386
 LDFLAGS2=-Telf.ld -Map=$(BUILD_DIR)/$(MAPFILE) --gc-sections -L$(LIBGCC) -L$(LIBPIP_LIB) -L$(LIBGCC) -melf_i386
@@ -90,18 +97,23 @@ LDFLAGS2=-Telf.ld -Map=$(BUILD_DIR)/$(MAPFILE) --gc-sections -L$(LIBGCC) -L$(LIB
 
 BUILD_DIR=Build/
 
+
 all: $(IMAGE)
 	echo "All done."
+
 
 clean:
 	rm -rf $(RTOS_OBJ) $(RTOS_IA32OBJ) $(SUPPORT_OBJ) $(BLINKY_OBJ) $(FULL_OBJ) $(FULL_TASK_OBJ) $(DEMO_OBJ)
 	rm -rf $(BUILD_DIR) $(IMAGE)
-
+	rm -rf function_addr.fun
 $(IMAGE): $(RTOS_OBJ) $(RTOS_IA32OBJ) $(SUPPORT_OBJ) $(BLINKY_OBJ) $(FULL_OBJ) $(FULL_TASK_OBJ) $(DEMO_OBJ) $(SKIPOBJ) $(RTOS_MEMOBJ)
 	mkdir -pv $(BUILD_DIR)
 	$(LD) $(LDFLAGS) $^ -o $@ -lgcc -lpip
 	$(LD) $(LDFLAGS) $^ -o $(BUILD_DIR)/$@ -lgcc -lpip
 	$(LD) $(LDFLAGS2) $^ -o $(BUILD_DIR)/FreeRTOS.elf -lgcc -lpip
+	nm -g -C $(BUILD_DIR)/FreeRTOS.elf > function_addr.fun
+	./generate_fun_header.sh > $(LIB_FREERTOS)/FreeRTOS_partition.h
+
 
 $(BUILD_DIR):
 	mkdir -pv $(BUILD_DIR)/Full_Demo/Standard_Demo_Tasks/Minimal/

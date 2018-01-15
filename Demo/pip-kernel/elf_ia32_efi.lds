@@ -18,6 +18,7 @@ SECTIONS
 		*( .rodata.*)
  	    __text_end =  ABSOLUTE(.);
   		. = ALIGN(4096);
+        
 	}	/* Read-write data (initialised) */
 
 

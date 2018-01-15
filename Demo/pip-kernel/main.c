@@ -61,6 +61,9 @@
 #include "flop.h"
 #include "TaskNotify.h"
 #include "IntQueue.h"
+#include "service.h"
+#include "queue.h"
+
 
 #include "task.h"
 #include <pip/fpinfo.h>
@@ -72,12 +75,20 @@
 #include "aes.h"
 #include "cpuidh.h"
 
-
-
+/*
+#include "NWManager.h"
+#include "Internal_Communication.h"
+#include "CommonStructure.h"
+#include "MyAppConfig.h"
+#include "TokenValidator.h"
+#include "AdminManager.h"
+#include "ConfigManager.h"
+#include "KeyManager.h"
+*/
 
 
 /*f a [potential] error has been detected.  Increasing the toggle rate in the
-presense of an error gives visual feedback of the system status. */
+  presense of an error gives visual feedback of the system status. */
 #define mainNO_ERROR_CHECK_TASK_PERIOD      pdMS_TO_TICKS( 5000UL )
 #define mainERROR_CHECK_TASK_PERIOD         pdMS_TO_TICKS( 1000UL )
 
@@ -130,20 +141,6 @@ volatile uint32_t ulCheckLoops = 0;
 
 
 
-void vTaskCode3(void *param){
-    int i;
-    printf("Starting dhrystone task\r\n");
-    for(i=0;i<100;i++)
-        dhrystone();
-
-    vTaskDelete( NULL );
-}
-
-void vTaskCode2(void *param){
-    int i;
-    for(i=0;;i++)
-        printf("HELLO !!! %d\r\n",i);
-}
 
 
 extern void* _partition1, *_epartition1;
@@ -170,85 +167,172 @@ void parse_bootinfo(pip_fpinfo* bootinfo)
     return;
 }
 
-uint64_t tabdata[100];
+
+
+
+
+
+
+
+//ODSI
+//
+//
+//
+//
+unsigned int fib(unsigned int n)
+{
+  unsigned int i = 0, j = 1, k, t;
+  if (n == 0)
+  return 0;
+  for (k = 1; k <= n; ++k)
+  {
+    t = i + j;
+    i = j;
+    j = t;
+  }
+  return j;
+}
+
+static uint32_t test=0;
+void vTaskCode( void * pvParameters )
+{
+
+
+    uint32_t i=0,j=0;
+    printf("Starting test fibo %d\r\n",test++);
+    for( ;; )
+    {
+      vTaskDelay(50);
+      printf("%d TIME : \r\n",j++);
+      i=0;
+      for(i=0;i<10;i++)
+        printf("%d\r\n",fib(i));
+    }
+}
+
+
+void hello_world_task(void* p)
+{
+    while(1) {
+        printf("Hello World TASK!\r\n");
+        vTaskDelay(1000);
+    }
+}
+
+// Global Queue Handle
+QueueHandle_t qh = 0;
+
+
+
+void task_tx(void* p)
+{
+    int myInt = 0;
+    while(1)
+    {
+        myInt++;
+        if(!xQueueSend(qh, &myInt, 500)) {
+            printf("Failed to send item to queue within 500ms");
+        }
+        printf("Send\r\n");
+        vTaskDelay(1000);
+        printf("Restarting sending message\r\n");
+    }
+}
+
+void task_rx(void* p)
+{
+    int myInt = 0;
+    while(1)
+    {
+        if(!xQueueReceive(qh, &myInt, 1000)) {
+            printf("Failed to receive item within 1000 ms");
+        }
+        else {
+            printf("Received: %u\n", myInt);
+        }
+    }
+}
 void main(pip_fpinfo* bootinfo)
 {
 
     Pip_Debug_Puts("Hello From FreeRTOS\r\n");
     printf("We're going to start the Real-time \r\n");
 
+    uint64_t User_Time;
+
+
+    start_time();
+
+
+    /*DEMO*/
+	//vCreateBlockTimeTasks();
+    //vStartSemaphoreTasks( mainSEM_TEST_PRIORITY );
+	//vStartGenericQueueTasks( mainGEN_QUEUE_TASK_PRIORITY );
+	//vStartQueuePeekTasks();
+	//vStartCountingSemaphoreTasks();
+	//vStartDynamicPriorityTasks();
+	//vStartQueueOverwriteTask( mainQUEUE_OVERWRITE_TASK_PRIORITY );
+	//vStartQueueSetTasks();
+	//vStartRecursiveMutexTasks();
+	//vStartEventGroupTasks();
+	//vStartTimerDemoTask( mainTIMER_TEST_PERIOD );
+	//vStartBlockingQueueTasks( mainBLOCK_Q_PRIORITY );
+	//vStartTaskNotifyTask();
+	//vStartInterruptQueueTasks();
+
+
+
+
+
+    end_time();
+
+    User_Time = milliSecs;
+
+    printf("Time ");
+    print64(User_Time);
+    printf("\r\n");
+
+
+    //Get Bootinfo for the available memory
     parse_bootinfo(bootinfo);
 
+
+    //Initialize the avaible pages
     uint32_t paging = initPaging((void*)bootinfo->membegin,(void*)bootinfo->memend);
 
-    //xTaskCreate(&vTaskCode2,"task code 3",configMINIMAL_STACK_SIZE * 2, 1, configMAX_PRIORITIES - 1,NULL);
-    //xTaskCreate(vTaskCode3,"task code 3",configMINIMAL_STACK_SIZE * 5, NULL, configMAX_PRIORITIES - 1,NULL);
-    //vCreateBlockTimeTasks();
-    int j = 0;
-    for(j = 0;j<100;j++){
-        start_time(); 
-        mbedtls_aes_self_test(1); 
-        end_time();
-        tabdata[j]= milliSecs;
-        
-    }
-    
-    for(j = 0;j<100;j++){
-        print64(tabdata[j]);
-        printf("\r\n");
-    }
- 
 
-//    for(i=0;i< 100;i++)
-//        dhrystone();
 
-    //vStartSemaphoreTasks(tskIDLE_PRIORITY+1);
+    //Creating protected domains
 
-    //vStartGenericQueueTasks(tskIDLE_PRIORITY+1);
-    //vStartInterruptQueueTasks();
-
+    //domain 1
     uint32_t size = partitions[0].end - partitions[0].start;
-
     xTaskCreateProtected(partitions[0].start, "partition1", size, NULL, configMAX_PRIORITIES - 1, NULL);
 
-
-
+    //domain 2
     //size = partitions[1].end - partitions[1].start;
-
-    //xTaskCreateProtected(partitions[1].start, "partition2", size, NULL, configMAX_PRIORITIES - 1, NULL);
-
-    /* Create all the other standard demo tasks. */
-    //vCreateBlockTimeTasks();
-    //vStartSemaphoreTasks( mainSEM_TEST_PRIORITY );
-    //vStartGenericQueueTasks( mainGEN_QUEUE_TASK_PRIORITY );
-    //vStartQueuePeekTasks();
-    //vStartCountingSemaphoreTasks();
-    //vStartDynamicPriorityTasks();
-    //vStartQueueOverwriteTask( mainQUEUE_OVERWRITE_TASK_PRIORITY );
-    //vStartQueueSetTasks();
-    //vStartRecursiveMutexTasks();
-    //vStartEventGroupTasks();
-    //vStartTimerDemoTask( mainTIMER_TEST_PERIOD );
-    //vStartBlockingQueueTasks( mainBLOCK_Q_PRIORITY );
-    //vStartTaskNotifyTask();
-    //vStartInterruptQueueTasks();
-    /* Create the 'check' task, as described at the top of this file. */
-    //xTaskCreate( prvCheckTask, "Check", configMINIMAL_STACK_SIZE * 2, NULL, configMAX_PRIORITIES - 1, NULL );
-
-    /* Create the register test tasks, as described at the top of this file. */
-    //xTaskCreate( prvRegTest1Entry, "Reg1", configMINIMAL_STACK_SIZE, ( void * ) mainREG_TEST_1_PARAMETER, tskIDLE_PRIORITY, NULL );
-    //xTaskCreate( prvRegTest2Entry, "Reg2", configMINIMAL_STACK_SIZE, ( void * ) mainREG_TEST_2_PARAMETER, tskIDLE_PRIORITY, NULL );
-
-    /* Death tasks must be created last as they check the number of tasks
-     *  running against the number of tasks expected to be running as part of their
-     *      sanity checks. */
-    //vCreateSuicidalTasks( tskIDLE_PRIORITY );
-
-    /* Display HPET Information (Disable in HPET.H). */
-   
-    printf("Creating isolated task with size %d bytes\r\n",size);
+    //xTaskCreateProtected(partitions[1].start, "partition2", size, NULL, configMAX_PRIORITIES - 2, NULL);
 
 
+    //xTaskCreate(vTaskCode,"Test task",2*configMINIMAL_STACK_SIZE,NULL,configMAX_PRIORITIES-1,NULL);
+
+    //xTaskCreate(vTaskCode,"Test task",2*configMINIMAL_STACK_SIZE,NULL,configMAX_PRIORITIES-1,NULL);
+
+    //xTaskCreate(hello_world_task, (signed char*)"Hello world task", 2048, 0, configMAX_PRIORITIES-1, 0);
+    qh = xQueueCreate(1, sizeof(int));
+
+    //xTaskCreate(task_tx, (signed char*)"t1", 2*configMINIMAL_STACK_SIZE, 0, configMAX_PRIORITIES-1, 0);
+    //xTaskCreate(task_rx, (signed char*)"t2", 2*configMINIMAL_STACK_SIZE, 0, configMAX_PRIORITIES-1, 0);
+
+    //TCB_t * part = partitions[0].start;
+    //init_service(part);
+
+    //service_t serv = {0x0,0xBEAF};
+
+    //add_service(serv,part);
+
+    //enable_service(part);
+    //Starting the scheduler
+    //main_myapp();
     vTaskStartScheduler();
     for(;;);
 }
@@ -264,4 +348,3 @@ void vApplicationMallocFailedHook(){
 
 void vAssertCalled(const char * file, unsigned long line){
 }
-

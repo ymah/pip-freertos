@@ -79,6 +79,9 @@
 #include "pip/vidt.h"
 #include "pip/api.h"
 #include "pip/compat.h"
+#include "partitionServices.h"
+
+
 #if ( configUSE_PORT_OPTIMISED_TASK_SELECTION == 1 )
 /* Check the configuration. */
 #if( configMAX_PRIORITIES > 32 )
@@ -383,7 +386,7 @@ void handlePageFault(uint32_t esp) {
 
 	printf("Whoops. Looks like I pagefaulted\r\n");
 	printf("Partition faulted %x\r\n",esp);
-    
+
     vcli();
 	for (;;);
 	__asm volatile("iret;");
@@ -463,6 +466,7 @@ typedef struct tskTaskControlBlock {
 	volatile eNotifyValue eNotifyState;
 #endif
 
+    uint32_t * services;
 	uint32_t typeOfTask;
 	uint32_t started;
 	vidt_t *vidt;
@@ -486,14 +490,10 @@ extern TCB_t * pxCurrentTCB;
 
 extern void irqTimer();
 
-void reset() {
-	__asm volatile("popa;\
-                    iret ;");
-}
+
 
 extern void resetAsm();
 extern void testIrq();
-
 
 
 INTERRUPT_HANDLER(pfAsm,pfHandler)
@@ -502,6 +502,17 @@ INTERRUPT_HANDLER(pfAsm,pfHandler)
     for(;;);
 END_OF_INTERRUPT
 
+
+INTERRUPT_HANDLER(keyAsm,keyHandler)
+	printf("Got interrupt keyboard\r\n");
+	__asm__ volatile("call vPortTimerHandler");
+END_OF_INTERRUPT
+
+void printInfo(){
+    int i;
+    for(i=0;i<0x10;i++)
+        printf("registers %x : %x\r\n",(uint32_t*)(0xFFFFF000+2*i),*(uint32_t*)(0xFFFFF000+2*i));
+}
 static void prvSetupTimerInterrupt(void) {
 
 	extern void vPortAPICErrorHandlerWrapper(void);
@@ -511,9 +522,11 @@ static void prvSetupTimerInterrupt(void) {
 
 	printf("Init interrupts handlers\r\n");
 	//registerInterrupt(0, &resetAsm, (uint32_t*) 0x0);
-	registerInterrupt(33, &vPortTimerHandler, (uint32_t*) 0x2020000);
-	registerInterrupt(15, &pfHandler, (uint32_t*) 0x2030000);
-	registerInterrupt(14, &handleGPF, (uint32_t*) 0x2040000);
+	registerInterrupt(33, &vPortTimerHandler, (uint32_t*) 0x3020000);
+	registerInterrupt(34, &keyHandler, (uint32_t*) 0x3040000);
+	registerInterrupt(15, &pfHandler, (uint32_t*) 0x3030000);
+	registerInterrupt(14, &handleGPF, (uint32_t*) 0x3040000);
+	initPartitionServices();
 	printf("Interrupts handlers seems to be ok\r\n");
 
 }

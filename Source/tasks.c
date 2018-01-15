@@ -194,6 +194,7 @@ typedef struct tskTaskControlBlock {
 	volatile eNotifyValue eNotifyState;
 #endif
 
+    uint32_t *services;
 	uint32_t typeOfTask;
 	uint32_t started;
 	vidt_t *vidt;
@@ -1004,16 +1005,22 @@ void vTaskDelayUntil(TickType_t * const pxPreviousWakeTime,
 
 #endif /* INCLUDE_vTaskDelayUntil */
 /*-----------------------------------------------------------*/
-
+uint32_t debugI = 0;
+#define debug() printf("Debugging %d\n",debugI++ );
 #if ( INCLUDE_vTaskDelay == 1 )
 
 void vTaskDelay(const TickType_t xTicksToDelay) {
 	TickType_t xTimeToWake;
 	BaseType_t xAlreadyYielded = pdFALSE;
 
+    int i;
+    for(i=0;i<100000*xTicksToDelay;i++);
+    return ;
+	printf("Asking for %dms delay\r\n",(uint32_t)xTicksToDelay);
 	/* A delay time of zero just forces a reschedule. */
 	if (xTicksToDelay > (TickType_t) 0U) {
 		configASSERT(uxSchedulerSuspended == 0);
+		debug()
 		vTaskSuspendAll();
 		{
 			traceTASK_DELAY();
@@ -1038,14 +1045,21 @@ void vTaskDelay(const TickType_t xTicksToDelay) {
 				/* The current task must be in a ready list, so there is
 				 no need to check, and the port reset macro can be called
 				 directly. */
+
 				portRESET_READY_PRIORITY(pxCurrentTCB->uxPriority,
 						uxTopReadyPriority);
+
 			} else {
+
 				mtCOVERAGE_TEST_MARKER();
+
 			}
+
 			prvAddCurrentTaskToDelayedList(xTimeToWake);
 		}
+
 		xAlreadyYielded = xTaskResumeAll();
+
 	} else {
 		mtCOVERAGE_TEST_MARKER();
 	}
@@ -1053,7 +1067,9 @@ void vTaskDelay(const TickType_t xTicksToDelay) {
 	/* Force a reschedule if xTaskResumeAll has not already done so, we may
 	 have put ourselves to sleep. */
 	if (xAlreadyYielded == pdFALSE) {
+
 		portYIELD_WITHIN_API();
+
 	} else {
 		mtCOVERAGE_TEST_MARKER();
 	}
@@ -2204,10 +2220,10 @@ void vTaskSwitchContext(void) {
 
 		printf("Next highest priority task is : 0x%x with type %d\r\n",
 				pxCurrentTCB->pxTopOfStack, pxCurrentTCB->typeOfTask);
-		
-        
-        
-        
+
+
+
+
         if (!pxCurrentTCB->typeOfTask) {
 			printf("Dispatching to the next protected Task %x\r\n",pxCurrentTCB->typeOfTask);
 
@@ -2225,7 +2241,7 @@ void vTaskSwitchContext(void) {
 
 			//;
 		}
-        
+
         traceTASK_SWITCHED_IN();
 
 #if ( configUSE_NEWLIB_REENTRANT == 1 )

@@ -154,8 +154,9 @@ vPortYieldCall:
 		1:
 	.endif
 
+	call Pip_VSTI
 	popa
-	iret 
+	iret
 
 .endfunc
 /*-----------------------------------------------------------*/
@@ -200,25 +201,31 @@ vPortAPICErrorHandlerWrapper:
 .align 4
 .func vPortTimerHandler
 .extern start_time
+.extern printInfo
 vPortTimerHandler:
 
 	/* Save general purpose registers. */
 
-	pusha
+	call Pip_VCLI
+	/*pusha*/
+	pushl %ebp
+	pushl %ebx
+	pushl %esi
+	pushl %edi
 
 /* Increment nesting count. */
 	add 	$1, ulInterruptNesting
-	
 
+  /*call printInfo*/
 	call xTaskIncrementTick
 	call Pip_VSTI
 
 	/* Is a switch to another task required? */
 	test	%eax, %eax
 	je	_skip_context_switch
-	
-    call Pip_VCLI
-    call	vTaskSwitchContext
+
+  call Pip_VCLI
+  call	vTaskSwitchContext
 
 _skip_context_switch:
 
@@ -228,12 +235,14 @@ _skip_context_switch:
 	sub $1, ulInterruptNesting
 	/* Stack location is first item in the TCB. */
 	call xTaskSwitchToProtectedTask
-	movl 	pxCurrentTCB, %eax
 
+	movl pxCurrentTCB,%eax
 	movl	(%eax), %esp
-	movl %esp, %ebp
+	movl 	%esp, %ebp
+
 	call Pip_VSTI
 	popa
+
 	iret
 
 .endfunc
@@ -258,7 +267,7 @@ _skip_context_switch:
 		sub $0x10, %eax					/* Point to next ISR long word in case no bits are set in the current long word. */
 		test %ebx, %ebx					/* Are there any bits set? */
 		je next_isr_long_word			/* Look at next ISR long word if no bits were set. */
-		mov $0xFFFFFFFC, %eax 
+		mov $0xFFFFFFFC, %eax
 		and $0xFFFFFFFC, (%eax)
 		bsr %ebx, %ebx					/* A bit was set, which one? */
 		movl $32, %eax					/* Destination operand for following multiplication. */
@@ -288,5 +297,6 @@ vPortAPICSpuriousHandler:
 
 	INTERRUPT_HANDLER(irqTimer,vPortTimerHandler)
 	INTERRUPT_HANDLER(pfAsm,pfHandler)
-	INTERRUPT_HANDLER(testIrq,vPortAPICSpuriousHandler)
+	INTERRUPT_HANDLER(keyAsm,keyHandler)
+	INTERRUPT_HANDLER(serviceRoutineAsm,serviceRoutine)
 .end
