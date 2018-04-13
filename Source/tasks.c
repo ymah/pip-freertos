@@ -603,7 +603,16 @@ uint32_t xTaskPartitionCreate(uint32_t base, uint32_t length,
 	}
 	printf("]\r\n");
 	printf("Partition mapped\r\n");
-
+	printf("Mapping additional memory for child\r\n");
+	uint32_t page = allocPage();
+	int index;
+	for(index = 0;index < 1000;index++){
+		if (mapPageWrapper((uint32_t)page, (uint32_t)partitionEntry, (void*) 0xA0000000+(index*0x1000)))
+			printf("Failed to map additional memory\r\n");
+		page = allocPage();
+		printf(".");
+	}
+	printf("\r\n");
     uint32_t stack_addr = (uint32_t)allocPage();
 	if (mapPageWrapper(stack_addr, (uint32_t)partitionEntry, (void*) 0xC0000000)) {
 		printf("Fail to map stack for the partition\r\n");
@@ -623,6 +632,7 @@ uint32_t xTaskPartitionCreate(uint32_t base, uint32_t length,
 	pcTCB->pxTopOfStack = partitionEntry;
 
 	return pcTCB->pxTopOfStack;
+
 
 	fail: printf("Failed...");
 	for (;;)
