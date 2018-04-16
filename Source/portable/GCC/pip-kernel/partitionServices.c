@@ -22,23 +22,29 @@ int checkAccess(){
 uint32_t partitionCaller;
 void queueCreateService(uint32_t data2){
 
-  printf("Starting QueueCreate services by %x\r\n",*(uint32_t*)pxCurrentTCB);
+  printf("Starting QueueCreate services by %x\r\n",partitionCaller);
   uint32_t * dataCall;
-  dataCall = (uint32_t*) Pip_RemoveVAddr(*(uint32_t*)pxCurrentTCB,data2);
+  dataCall = (uint32_t*) Pip_RemoveVAddr(partitionCaller,data2);
 
-  uint32_t length = *(dataCall+1);
-  uint32_t size_type = *(dataCall+2);
+  uint32_t length = *(dataCall);
+  uint32_t size_type = *(dataCall+1);
 
-  printf("Service requested with %d %d\r\n",length,size_type);
+  if(*(dataCall+2) == 0xDEADBEEF){
+    printf("Evrything ok...\r\n");
+  }
+  printf("Service requested with %d %d %x\r\n",length,size_type);
+  //uint32_t *returnFct = (uint32_t*) Pip_RemoveVAddr(*(uint32_t*)pxCurrentTCB,returnCall);
+
   QueueHandle_t * queue = (QueueHandle_t*) pvPortMalloc(sizeof(QueueHandle_t));
 
   queue = xQueueCreate(length,size_type);
+  *(dataCall+2) = (uint32_t*) queue;
+  printf("Resuming partition with %x at %x\r\n",*(dataCall+2));
 
-  printf("Resuming partition with %x\n",queue);
-
-  if(Pip_MapPageWrapper(queue,partitionCaller,returnServiceAddress)){
+  if(Pip_MapPageWrapper(dataCall,partitionCaller,data2)){
     printf("Error in mapping service result\r\n");
   }
+  printf("resuming\r\n");
   resume(partitionCaller, 0);
 }
 void queueSendService(uint32_t data2){
@@ -47,16 +53,16 @@ void queueSendService(uint32_t data2){
   uint32_t * dataCall;
   dataCall = (uint32_t*) Pip_RemoveVAddr(*(uint32_t*)pxCurrentTCB,data2);
 
-  uint32_t queue = *(dataCall+1);
-  uint32_t * itemToQueue = *(dataCall+2);
-  uint32_t tickToWait = *(dataCall+3);
+  uint32_t queue = *(dataCall);
+  uint32_t * itemToQueue = *(dataCall+1);
+  uint32_t tickToWait = *(dataCall+2);
 
   printf("Data for sending : %x %x %x\r\n",queue,itemToQueue,tickToWait);
 
-  //QueueHandle_t * queueToSend = (QueueHandle_t*) Pip_RemoveVAddr(partitionCaller,queue);
-  //void * dataToSend = (void*) Pip_RemoveVAddr(partitionCaller,itemToQueue);
+  QueueHandle_t * queueToSend = (QueueHandle_t*) Pip_RemoveVAddr(partitionCaller,queue);
+  void * dataToSend = (void*) Pip_RemoveVAddr(partitionCaller,itemToQueue);
 
-  //xQueueSend(queueToSend,dataToSend,tickToWait);
+  xQueueSend(queueToSend,dataToSend,tickToWait);
 
 
   printf("Resuming partition with %x\n",queue);

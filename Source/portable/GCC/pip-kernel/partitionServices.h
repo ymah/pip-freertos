@@ -12,6 +12,7 @@
 struct xQueueCreateParameters_s {
   uint32_t lenght;
   uint32_t size_type;
+  uint32_t returnCall;
 };
 typedef struct xQueueCreateParameters_s xQueueCreateParameters;
 
