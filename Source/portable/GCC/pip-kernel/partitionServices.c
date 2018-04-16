@@ -49,9 +49,9 @@ void queueCreateService(uint32_t data2){
 }
 void queueSendService(uint32_t data2){
 
-  printf("Starting QueueSend services by %x\r\n",*(uint32_t*)pxCurrentTCB);
+  printf("Starting QueueSend services by %x\r\n",partitionCaller);
   uint32_t * dataCall;
-  dataCall = (uint32_t*) Pip_RemoveVAddr(*(uint32_t*)pxCurrentTCB,data2);
+  dataCall = (uint32_t*) Pip_RemoveVAddr(partitionCaller,data2);
 
   uint32_t queue = *(dataCall);
   uint32_t * itemToQueue = *(dataCall+1);
@@ -71,9 +71,9 @@ void queueSendService(uint32_t data2){
 }
 void queueReceiveService(uint32_t data2){
 
-  printf("Starting QueueReceive services by %x\r\n",*(uint32_t*)pxCurrentTCB);
+  printf("Starting QueueReceive services by %x\r\n",partitionCaller);
   uint32_t * dataCall;
-  dataCall = (uint32_t*) Pip_RemoveVAddr(*(uint32_t*)pxCurrentTCB,data2);
+  dataCall = (uint32_t*) Pip_RemoveVAddr(partitionCaller,data2);
 
   uint32_t length = *(dataCall+1);
   uint32_t size_type = *(dataCall+2);
