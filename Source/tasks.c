@@ -606,15 +606,15 @@ uint32_t xTaskPartitionCreate(uint32_t base, uint32_t length,
 	printf("Mapping additional memory for child\r\n");
 	uint32_t page = allocPage();
 	int index;
-	for(index = 0;index < 1000;index++){
-		if (mapPageWrapper((uint32_t)page, (uint32_t)partitionEntry, (void*) 0xA0000000+(index*0x1000)))
+	for(index = 0;index < 10000;index++){
+		if (mapPageWrapper((uint32_t)page, (uint32_t)partitionEntry, (uint32_t)( 0xA0000000+(index*0x1000))))
 			printf("Failed to map additional memory\r\n");
 		page = allocPage();
-		printf(".");
+		//printf(".");
 	}
 	printf("\r\n");
-    uint32_t stack_addr = (uint32_t)allocPage();
-	if (mapPageWrapper(stack_addr, (uint32_t)partitionEntry, (void*) 0xC0000000)) {
+  uint32_t stack_addr = (uint32_t)allocPage();
+	if (mapPageWrapper(stack_addr, (uint32_t)partitionEntry, (uint32_t) (0xF0000000 + 0x1000 - sizeof(uint32_t)))) {
 		printf("Fail to map stack for the partition\r\n");
 		goto fail;
 	}
@@ -622,21 +622,25 @@ uint32_t xTaskPartitionCreate(uint32_t base, uint32_t length,
 	printf("Done.\r\n");
 
 	pcTCB->vidt = (vidt_t*) allocPage();
+	printf("Task VIDT at %x\r\n",pcTCB->vidt);
 	pcTCB->vidt->vint[0].eip = load_addr;
-	pcTCB->vidt->vint[0].esp = 0xC0000000 + 0x1000 - sizeof(uint32_t);
+	pcTCB->vidt->vint[0].esp = 0xF0000000 + 0x1000 - sizeof(uint32_t);
 	pcTCB->vidt->flags = 0x1;
 
-	if (mapPageWrapper((uint32_t)pcTCB->vidt, (uint32_t)partitionEntry, (void*) 0xFFFFF000))
-		printf("Failed to map Vidt\r\n");
+	if (mapPageWrapper((uint32_t)pcTCB->vidt, (uint32_t)partitionEntry, (uint32_t) 0xFFFFF000)){
+			printf("Failed to map Vidt\r\n");
+			goto fail;
+		}
 
 	pcTCB->pxTopOfStack = partitionEntry;
 
 	return pcTCB->pxTopOfStack;
 
 
-	fail: printf("Failed...");
+	fail:
+
 	for (;;)
-		;
+		printf("Failed...\r\n");
 
 }
 

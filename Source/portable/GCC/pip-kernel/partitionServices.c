@@ -30,7 +30,7 @@ void queueCreateService(uint32_t data2){
   uint32_t size_type = *(dataCall+1);
 
   if(*(dataCall+2) == 0xDEADBEEF){
-    printf("Evrything ok...\r\n");
+    printf("Everything ok...\r\n");
   }
   printf("Service requested with %d %d %x\r\n",length,size_type);
   //uint32_t *returnFct = (uint32_t*) Pip_RemoveVAddr(*(uint32_t*)pxCurrentTCB,returnCall);
@@ -39,7 +39,8 @@ void queueCreateService(uint32_t data2){
 
   queue = xQueueCreate(length,size_type);
   *(dataCall+2) = (uint32_t*) queue;
-  printf("Resuming partition with %x at %x\r\n",*(dataCall+2));
+
+  printf("Resuming partition with %x\r\n",queue);
 
   if(Pip_MapPageWrapper(dataCall,partitionCaller,data2)){
     printf("Error in mapping service result\r\n");
@@ -47,6 +48,14 @@ void queueCreateService(uint32_t data2){
   printf("resuming\r\n");
   resume(partitionCaller, 0);
 }
+
+
+struct AMessage
+ {
+    char ucMessageID;
+    char ucData[ 20 ];
+ } xMessage;
+
 void queueSendService(uint32_t data2){
 
   printf("Starting QueueSend services by %x\r\n",partitionCaller);
@@ -54,35 +63,64 @@ void queueSendService(uint32_t data2){
   dataCall = (uint32_t*) Pip_RemoveVAddr(partitionCaller,data2);
 
   uint32_t queue = *(dataCall);
+  printf("Queue is %x\r\n",queue);
   uint32_t * itemToQueue = *(dataCall+1);
+  printf("Item to Queue is %x\r\n",itemToQueue);
   uint32_t tickToWait = *(dataCall+2);
-
-  printf("Data for sending : %x %x %x\r\n",queue,itemToQueue,tickToWait);
-
-  QueueHandle_t * queueToSend = (QueueHandle_t*) Pip_RemoveVAddr(partitionCaller,queue);
-  void * dataToSend = (void*) Pip_RemoveVAddr(partitionCaller,itemToQueue);
-
-  xQueueSend(queueToSend,dataToSend,tickToWait);
+  printf("Tick to wait %x\r\n",tickToWait);
 
 
-  printf("Resuming partition with %x\n",queue);
+  QueueHandle_t queueToSend = (QueueHandle_t)queue; //(QueueHandle_t*) Pip_RemoveVAddr(partitionCaller,queue);
+  uint32_t * dataToSend = (uint32_t *) Pip_RemoveVAddr(partitionCaller,itemToQueue);
+
+  //printf("Data to send %x\r\n",dataToSend);
+  //int i;
+  //for(i=0;i<20;i++)
+    //printf("%d\n",dataToSend->ucData[i] );
+  xQueueSend(queueToSend,(void*)dataToSend,tickToWait);
+
+  printf("Message waiting %d\r\n",uxQueueMessagesWaiting(queueToSend));
+  if(Pip_MapPageWrapper(dataCall,partitionCaller,data2)){
+    printf("Error in mapping service result\r\n");
+  }
+  printf("Resuming partition after sending\n",queue);
 
   resume(partitionCaller, 0);
 }
 void queueReceiveService(uint32_t data2){
 
-  printf("Starting QueueReceive services by %x\r\n",partitionCaller);
+
+
+
+  printf("Starting queueReceive services by %x\r\n",partitionCaller);
   uint32_t * dataCall;
   dataCall = (uint32_t*) Pip_RemoveVAddr(partitionCaller,data2);
 
-  uint32_t length = *(dataCall+1);
-  uint32_t size_type = *(dataCall+2);
+  uint32_t queue = *(dataCall);
+  printf("Queue is %x\r\n",queue);
+  uint32_t * bufferReceive = *(dataCall+1);
+  printf("Buffer to Receive is %x\r\n",bufferReceive);
+  uint32_t tickToWait = *(dataCall+2);
+  printf("Tick to wait %x\r\n",tickToWait);
 
-  QueueHandle_t * queue = (QueueHandle_t*) pvPortMalloc(sizeof(QueueHandle_t));
 
-  //queue = send(length,size_type);
 
-  printf("Resuming partition with %x\n",queue);
+  QueueHandle_t queueToSend = (QueueHandle_t)queue; //(QueueHandle_t*) Pip_RemoveVAddr(partitionCaller,queue);
+  void * buffer = (void*) Pip_RemoveVAddr(partitionCaller,bufferReceive);
+  printf("Buffer is %x\r\n",buffer);
+  printf("Queue for receiving is %x\r\n",queueToSend);
+  xQueueReceive(queueToSend,buffer,tickToWait);
+
+  printf("Message waiting %d\r\n",uxQueueMessagesWaiting(queueToSend));
+
+  printf("Data received\r\n");
+  if(Pip_MapPageWrapper(dataCall,partitionCaller,data2)){
+    printf("Error in mapping service result\r\n");
+  }
+  if(Pip_MapPageWrapper(buffer,partitionCaller,bufferReceive)){
+    printf("Error in mapping service result\r\n");
+  }
+  printf("Resuming partition after receiving\n");
 
   resume(partitionCaller, 0);
 }
@@ -92,28 +130,30 @@ void sbrkService(uint32_t data2){
 
 
 
-  printf("Starting sbrk services by %x\r\n",*(uint32_t*)pxCurrentTCB);
-  //dataCall = (uint32_t*) Pip_RemoveVAddr(*(uint32_t*)pxCurrentTCB,data2);
-  //uint32_t * dataCall;
-  printf("Allocating memory %d pages \r\n",data2);
+  printf("Starting sbrk services by %x\r\n",partitionCaller);
+  uint32_t * dataCall;
+  dataCall = (uint32_t*) Pip_RemoveVAddr(partitionCaller,data2);
+
+  uint32_t size = *(dataCall);
+  uint32_t begin = *(dataCall+1);
+  printf("Allocating memory %d pages at %x\r\n",size,begin);
 
   int index;
-
-    uint32_t * page = allocPage();
-    uint32_t * firstPage = page;
-    printf("First page %x\r\n",firstPage);
-  for(index=0;index<12;index++){
-
-    if(Pip_MapPageWrapper(page,partitionCaller,page)){
-      printf("Error in mapping sbrk call\r\n");
-    }
+  uint32_t page;
+  for(index=0;index<size;index++){
     page = allocPage();
-    printf("Allocating %x\r\n",page);
-  }
+    if(Pip_MapPageWrapper(page,partitionCaller,begin+(index*0x1000))){
+      printf("Error in mapping sbrk call\r\n");
+      for(;;);
+    }
 
-  printf("Mapping first page %x at %x\r\n",firstPage);
-  Pip_Notify(partitionCaller,0x81,firstPage,0);
+    //printf("Allocating %x at %x\r\n",page,begin+(index*0x1000));
+  }
+  if(Pip_MapPageWrapper(dataCall,partitionCaller,data2)){
+    printf("Error in mapping service result\r\n");
+  }
   printf("return from sbrk service\r\n" );
+
   resume(partitionCaller, 0);
 
 }
