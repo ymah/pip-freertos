@@ -300,17 +300,19 @@ void main(pip_fpinfo* bootinfo)
     //Initialize the avaible pages
     uint32_t paging = initPaging((void*)bootinfo->membegin,(void*)bootinfo->memend);
 
-
+    setNumberOfPartition(1);
 
     //Creating protected domains
 
     //domain 1
+
+
     uint32_t size = partitions[0].end - partitions[0].start;
     xTaskCreateProtected(partitions[0].start, "partition1", size, NULL, configMAX_PRIORITIES - 1, NULL);
 
     //domain 2
-    //size = partitions[1].end - partitions[1].start;
-    //xTaskCreateProtected(partitions[1].start, "partition2", size, NULL, configMAX_PRIORITIES - 2, NULL);
+    size = partitions[1].end - partitions[1].start;
+    xTaskCreateProtected(partitions[1].start, "partition2", size, NULL, configMAX_PRIORITIES - 1, NULL);
 
 
     //xTaskCreate(vTaskCode,"Test task",2*configMINIMAL_STACK_SIZE,NULL,configMAX_PRIORITIES-1,NULL);
