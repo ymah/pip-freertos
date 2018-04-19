@@ -82,6 +82,8 @@
 #include "timers.h"
 #include "StackMacros.h"
 
+#include "string.h"
+
 #include <pip/paging.h>
 #include <pip/api.h>
 #include <pip/vidt.h>
@@ -194,7 +196,7 @@ typedef struct tskTaskControlBlock {
 	volatile eNotifyValue eNotifyState;
 #endif
 
-    uint32_t *services;
+  uint32_t *services;
 	uint32_t typeOfTask;
 	uint32_t started;
 	vidt_t *vidt;
@@ -560,6 +562,18 @@ static void prvResetNextTaskUnblockTime(void);
 static char *prvWriteNameToBuffer( char *pcBuffer, const char *pcTaskName );
 
 #endif
+
+
+
+
+size_t strlen(const char * str)
+{
+    const char *s;
+    for (s = str; *s; ++s) {}
+    return(s - str);
+}
+
+
 /*-----------------------------------------------------------*/
 
 uint32_t xTaskPartitionCreate(uint32_t base, uint32_t length,

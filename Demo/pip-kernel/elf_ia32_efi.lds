@@ -4,7 +4,7 @@ ENTRY(_start)
 physbase = 0x00700000;
 
 SECTIONS
-{	
+{
  	.text 0x00700000:
 	{
 	    code = .;
@@ -18,7 +18,7 @@ SECTIONS
 		*( .rodata.*)
  	    __text_end =  ABSOLUTE(.);
   		. = ALIGN(4096);
-        
+
 	}	/* Read-write data (initialised) */
 
 
@@ -26,9 +26,9 @@ SECTIONS
     {
         _partition1 = . ;
         *(.partition1)
-        . = ALIGN(0x40000);
+        . = ALIGN(0x1001);
         _epartition1 = . ;
-    } 
+    }
 
     .partition2 : ALIGN(4096)
     {
@@ -36,14 +36,14 @@ SECTIONS
         *(.partition2)
         . = ALIGN(0x1001);
         _epartition2 = . ;
-    } 
+    }
 
 
 
     .data :
 	{
  		__data_start = ABSOLUTE(.);
-  		__data_lma = LOADADDR(.data); 
+  		__data_lma = LOADADDR(.data);
   		__data_vma =  ABSOLUTE(.);
  		*(.data)
  		*(.data.*)
@@ -60,7 +60,7 @@ SECTIONS
     	__bss_end =  ABSOLUTE(.);
    		. = ALIGN(1024);
  	}
-	
+
 	/* stack used before the scheduler starts */
  	.boot_stack :
 	{
@@ -76,7 +76,7 @@ SECTIONS
 
 	/* function exports */
  	.drectve : { KEEP (*(.drectve)) }
-  	
+
    	.comment : { *(.comment) }
   	.inthandler :
   	{
@@ -87,5 +87,5 @@ SECTIONS
 		. = ALIGN(4096);
   	}
   end = .; _end = .; __end = .;
-	
+
 }
