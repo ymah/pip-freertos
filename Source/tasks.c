@@ -565,15 +565,6 @@ static char *prvWriteNameToBuffer( char *pcBuffer, const char *pcTaskName );
 
 
 
-
-size_t strlen(const char * str)
-{
-    const char *s;
-    for (s = str; *s; ++s) {}
-    return(s - str);
-}
-
-
 /*-----------------------------------------------------------*/
 
 uint32_t xTaskPartitionCreate(uint32_t base, uint32_t length,
@@ -591,7 +582,7 @@ uint32_t xTaskPartitionCreate(uint32_t base, uint32_t length,
 	partsh3 = allocPage();
 
 	printf(
-			"Partition descriptor : %x \r\npd : %x \r\npartsh1 : %x \r\npartsh2 : %x\r\npartsh3 : %x\r\n",
+			"Partition descriptor : %x \r\n\tpd : %x \r\n\tpartsh1 : %x \r\n\tpartsh2 : %x\r\n\tpartsh3 : %x\r\n",
 			partitionEntry, partpd, partsh1, partsh2, partsh3);
 
 	printf("Creating task partition\r\n");
@@ -620,7 +611,7 @@ uint32_t xTaskPartitionCreate(uint32_t base, uint32_t length,
 	printf("Mapping additional memory for child\r\n");
 	uint32_t page = allocPage();
 	int index;
-	for(index = 0;index < 10000;index++){
+	for(index = 0;index < 1000;index++){
 		if (mapPageWrapper((uint32_t)page, (uint32_t)partitionEntry, (uint32_t)( 0xA0000000+(index*0x1000))))
 			printf("Failed to map additional memory\r\n");
 		page = allocPage();
@@ -672,6 +663,15 @@ uint32_t xTaskSwitchToProtectedTask(){
 	return 0;
 }
 /*-----------------------------------------------------------*/
+
+uint32_t numberOfPartitions;
+uint32_t * partitionList;
+uint32_t currentIndex;
+uint32_t initPartitionList = 0;
+void setNumberOfPartition(uint32_t num){
+	numberOfPartitions = num;
+}
+
 
 BaseType_t xTaskGenericCreate(TaskFunction_t pxTaskCode,
 		const char * const pcName, const uint32_t usStackDepth,
@@ -784,9 +784,19 @@ BaseType_t xTaskGenericCreate(TaskFunction_t pxTaskCode,
 			if (type)
 				pxNewTCB->pxTopOfStack = pxPortInitialiseStack(pxTopOfStack,
 						pxTaskCode, pvParameters);
-			else
+			else{
 				pxNewTCB->pxTopOfStack = xTaskPartitionCreate(pxTaskCode,
 						usStackDepth, PARTITION_ADDR, pxNewTCB);
+
+
+						if(!initPartitionList){
+							partitionList = (uint32_t*)pvPortMalloc(numberOfPartitions*sizeof(uint32_t));
+							initPartitionList = 1;
+						}
+						partitionList[currentIndex++] = pxNewTCB->pxTopOfStack;
+
+
+					}
 
 			printf("%s : {%d , 0x%x, %d}\r\n", pcName, type,
 					pxNewTCB->pxTopOfStack, pxNewTCB->uxPriority);
@@ -874,6 +884,15 @@ BaseType_t xTaskGenericCreate(TaskFunction_t pxTaskCode,
 	}
 
 	return xReturn;
+}
+
+
+uint32_t getNumberOfPartition(){
+	return currentIndex;
+}
+uint32_t * getPartitionList(){
+
+	return partitionList;
 }
 /*-----------------------------------------------------------*/
 
@@ -2060,9 +2079,10 @@ BaseType_t xTaskIncrementTick(void) {
 		 writer has not explicitly turned time slicing off. */
 #if ( ( configUSE_PREEMPTION == 1 ) && ( configUSE_TIME_SLICING == 1 ) )
 		{
-			if ( listCURRENT_LIST_LENGTH(
-					&(pxReadyTasksLists[pxCurrentTCB->uxPriority]))
+
+			if ( listCURRENT_LIST_LENGTH(&(pxReadyTasksLists[pxCurrentTCB->uxPriority]))
 					> (UBaseType_t) 1) {
+
 				xSwitchRequired = pdTRUE;
 			} else {
 				mtCOVERAGE_TEST_MARKER();
@@ -2096,6 +2116,7 @@ BaseType_t xTaskIncrementTick(void) {
 #if ( configUSE_PREEMPTION == 1 )
 	{
 		if (xYieldPending != pdFALSE) {
+
 			xSwitchRequired = pdTRUE;
 		} else {
 			mtCOVERAGE_TEST_MARKER();
@@ -2248,9 +2269,6 @@ void vTaskSwitchContext(void) {
 
 		printf("Next highest priority task is : 0x%x with type %d\r\n",
 				pxCurrentTCB->pxTopOfStack, pxCurrentTCB->typeOfTask);
-
-
-
 
         if (!pxCurrentTCB->typeOfTask) {
 			printf("Dispatching to the next protected Task %x\r\n",pxCurrentTCB->typeOfTask);

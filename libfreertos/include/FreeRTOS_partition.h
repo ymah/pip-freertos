@@ -1,31 +1,39 @@
 #ifndef _FREERTOS_ACCESS_h
 #define _FREERTOS_ACCESS_h
 #ifndef __Arch_APICall_0
-	#define __Arch_APICall_0 0x007004c7
+	#define __Arch_APICall_0 0x00700714
 #endif
 
 #ifndef __Arch_APICall_1
-	#define __Arch_APICall_1 0x007004eb
+	#define __Arch_APICall_1 0x00700738
 #endif
 
 #ifndef __Arch_APICall_2
-	#define __Arch_APICall_2 0x00700552
+	#define __Arch_APICall_2 0x0070079f
 #endif
 
 #ifndef __Arch_APICall_3
-	#define __Arch_APICall_3 0x007005c6
+	#define __Arch_APICall_3 0x00700813
 #endif
 
 #ifndef __Arch_APICall_4
-	#define __Arch_APICall_4 0x007005d0
+	#define __Arch_APICall_4 0x0070081d
 #endif
 
 #ifndef __Arch_APICall_5
-	#define __Arch_APICall_5 0x00700603
+	#define __Arch_APICall_5 0x00700850
 #endif
 
 #ifndef __Arch_APICall_6
-	#define __Arch_APICall_6 0x0070064c
+	#define __Arch_APICall_6 0x00700899
+#endif
+
+#ifndef channelService
+	#define channelService 0x00704431
+#endif
+
+#ifndef checkAccess
+	#define checkAccess 0x00703efd
 #endif
 
 #ifndef code
@@ -33,79 +41,91 @@
 #endif
 
 #ifndef collect
-	#define collect 0x00700871
+	#define collect 0x00700abe
 #endif
 
 #ifndef createPartition
-	#define createPartition 0x007007b1
+	#define createPartition 0x007009fe
 #endif
 
 #ifndef deletePartition
-	#define deletePartition 0x00700865
+	#define deletePartition 0x00700ab2
 #endif
 
 #ifndef dispatch
-	#define dispatch 0x00700815
+	#define dispatch 0x00700a62
 #endif
 
 #ifndef dRegTest1_st1
-	#define dRegTest1_st1 0x00704de0
+	#define dRegTest1_st1 0x00705c10
 #endif
 
 #ifndef dRegTest1_st2
-	#define dRegTest1_st2 0x00704dd8
+	#define dRegTest1_st2 0x00705c08
 #endif
 
 #ifndef dRegTest1_st3
-	#define dRegTest1_st3 0x00704dd0
+	#define dRegTest1_st3 0x00705c00
 #endif
 
 #ifndef dRegTest1_st4
-	#define dRegTest1_st4 0x00704dc8
+	#define dRegTest1_st4 0x00705bf8
 #endif
 
 #ifndef dRegTest1_st5
-	#define dRegTest1_st5 0x00704dc0
+	#define dRegTest1_st5 0x00705bf0
 #endif
 
 #ifndef dRegTest1_st6
-	#define dRegTest1_st6 0x00704db8
+	#define dRegTest1_st6 0x00705be8
 #endif
 
 #ifndef dRegTest1_st7
-	#define dRegTest1_st7 0x00704db0
+	#define dRegTest1_st7 0x00705be0
 #endif
 
 #ifndef dRegTest2_st1
-	#define dRegTest2_st1 0x00704e18
+	#define dRegTest2_st1 0x00705c48
 #endif
 
 #ifndef dRegTest2_st2
-	#define dRegTest2_st2 0x00704e10
+	#define dRegTest2_st2 0x00705c40
 #endif
 
 #ifndef dRegTest2_st3
-	#define dRegTest2_st3 0x00704e08
+	#define dRegTest2_st3 0x00705c38
 #endif
 
 #ifndef dRegTest2_st4
-	#define dRegTest2_st4 0x00704e00
+	#define dRegTest2_st4 0x00705c30
 #endif
 
 #ifndef dRegTest2_st5
-	#define dRegTest2_st5 0x00704df8
+	#define dRegTest2_st5 0x00705c28
 #endif
 
 #ifndef dRegTest2_st6
-	#define dRegTest2_st6 0x00704df0
+	#define dRegTest2_st6 0x00705c20
 #endif
 
 #ifndef dRegTest2_st7
-	#define dRegTest2_st7 0x00704de8
+	#define dRegTest2_st7 0x00705c18
 #endif
 
-#ifndef fib
-	#define fib 0x00704224
+#ifndef end_time
+	#define end_time 0x00704b9e
+#endif
+
+#ifndef getNumberOfPartition
+	#define getNumberOfPartition 0x00702114
+#endif
+
+#ifndef getPartitionList
+	#define getPartitionList 0x0070211a
+#endif
+
+#ifndef getRdtsc
+	#define getRdtsc 0x00704b3b
 #endif
 
 #ifndef halt
@@ -113,199 +133,259 @@
 #endif
 
 #ifndef handleGPF
-	#define handleGPF 0x00703b88
+	#define handleGPF 0x00703cd3
 #endif
 
 #ifndef inb
-	#define inb 0x007006eb
+	#define inb 0x00700938
+#endif
+
+#ifndef initPartitionServices
+	#define initPartitionServices 0x0070464b
 #endif
 
 #ifndef inl
-	#define inl 0x0070076f
+	#define inl 0x007009bc
 #endif
 
 #ifndef inw
-	#define inw 0x0070072d
+	#define inw 0x0070097a
 #endif
 
 #ifndef irqTimer
-	#define irqTimer 0x00700124
+	#define irqTimer 0x00700120
+#endif
+
+#ifndef keyAsm
+	#define keyAsm 0x00700130
+#endif
+
+#ifndef keyHandler
+	#define keyHandler 0x00703d10
 #endif
 
 #ifndef main
-	#define main 0x0070431b
+	#define main 0x00704d30
 #endif
 
 #ifndef mapPage
-	#define mapPage 0x007007f5
+	#define mapPage 0x00700a42
 #endif
 
 #ifndef mappedInChild
-	#define mappedInChild 0x00700859
+	#define mappedInChild 0x00700aa6
 #endif
 
 #ifndef memcpy
-	#define memcpy 0x00703d66
+	#define memcpy 0x0070466d
 #endif
 
 #ifndef outaddrl
-	#define outaddrl 0x0070078e
+	#define outaddrl 0x007009db
 #endif
 
 #ifndef outb
-	#define outb 0x007006c8
+	#define outb 0x00700915
 #endif
 
 #ifndef outl
-	#define outl 0x0070074c
+	#define outl 0x00700999
 #endif
 
 #ifndef outw
-	#define outw 0x0070070a
+	#define outw 0x00700957
 #endif
 
 #ifndef pageMapCount
-	#define pageMapCount 0x007007cd
+	#define pageMapCount 0x00700a1a
+#endif
+
+#ifndef parse_bootinfo
+	#define parse_bootinfo 0x00704cc1
 #endif
 
 #ifndef pfAsm
-	#define pfAsm 0x0070012c
+	#define pfAsm 0x00700128
 #endif
 
 #ifndef pfHandler
-	#define pfHandler 0x00703ba2
+	#define pfHandler 0x00703ced
 #endif
 
 #ifndef Pip_AllocPage
-	#define Pip_AllocPage 0x00700313
+	#define Pip_AllocPage 0x00700560
 #endif
 
 #ifndef Pip_Debug_Putc
-	#define Pip_Debug_Putc 0x00700688
+	#define Pip_Debug_Putc 0x007008d5
 #endif
 
 #ifndef Pip_Debug_PutDec
-	#define Pip_Debug_PutDec 0x007001d7
+	#define Pip_Debug_PutDec 0x00700414
 #endif
 
 #ifndef Pip_Debug_PutHex
-	#define Pip_Debug_PutHex 0x0070016c
+	#define Pip_Debug_PutHex 0x007003a9
 #endif
 
 #ifndef Pip_Debug_Puts
-	#define Pip_Debug_Puts 0x0070013c
+	#define Pip_Debug_Puts 0x00700379
 #endif
 
 #ifndef Pip_FreePage
-	#define Pip_FreePage 0x0070033f
+	#define Pip_FreePage 0x0070058c
 #endif
 
 #ifndef Pip_InitPaging
-	#define Pip_InitPaging 0x0070025f
+	#define Pip_InitPaging 0x0070049c
 #endif
 
 #ifndef Pip_MapPageWrapper
-	#define Pip_MapPageWrapper 0x007003d1
+	#define Pip_MapPageWrapper 0x0070061e
 #endif
 
 #ifndef Pip_Notify
-	#define Pip_Notify 0x007004a4
+	#define Pip_Notify 0x007006f1
 #endif
 
 #ifndef Pip_RegisterInterrupt
-	#define Pip_RegisterInterrupt 0x00700377
+	#define Pip_RegisterInterrupt 0x007005c4
 #endif
 
 #ifndef pip_time
-	#define pip_time 0x00700831
+	#define pip_time 0x00700a7e
 #endif
 
 #ifndef Pip_VCLI
-	#define Pip_VCLI 0x00700393
+	#define Pip_VCLI 0x007005e0
 #endif
 
 #ifndef Pip_VSTI
-	#define Pip_VSTI 0x007003b2
+	#define Pip_VSTI 0x007005ff
 #endif
 
 #ifndef prepare
-	#define prepare 0x007007dd
+	#define prepare 0x00700a2a
 #endif
 
 #ifndef print
-	#define print 0x00703fcb
+	#define print 0x007048d2
+#endif
+
+#ifndef print64
+	#define print64 0x00704c96
 #endif
 
 #ifndef printf
-	#define printf 0x007041ff
+	#define printf 0x00704b06
 #endif
 
 #ifndef pvPortMalloc
-	#define pvPortMalloc 0x007043a3
+	#define pvPortMalloc 0x00704e73
 #endif
 
 #ifndef pvTaskIncrementMutexHeldCount
-	#define pvTaskIncrementMutexHeldCount 0x00702f8b
+	#define pvTaskIncrementMutexHeldCount 0x007030db
 #endif
 
 #ifndef pxPortInitialiseStack
-	#define pxPortInitialiseStack 0x00703a7b
+	#define pxPortInitialiseStack 0x00703bc6
+#endif
+
+#ifndef queueCreateService
+	#define queueCreateService 0x00703f03
+#endif
+
+#ifndef queueReceiveService
+	#define queueReceiveService 0x0070416e
+#endif
+
+#ifndef queueSendService
+	#define queueSendService 0x00704025
 #endif
 
 #ifndef registerIntBase
-	#define registerIntBase 0x00700358
+	#define registerIntBase 0x007005a5
 #endif
 
 #ifndef resume
-	#define resume 0x00700839
+	#define resume 0x00700a86
+#endif
+
+#ifndef sbrkService
+	#define sbrkService 0x0070431b
+#endif
+
+#ifndef serviceRoutine
+	#define serviceRoutine 0x00704577
+#endif
+
+#ifndef serviceRoutineAsm
+	#define serviceRoutineAsm 0x00700138
+#endif
+
+#ifndef setNumberOfPartition
+	#define setNumberOfPartition 0x00701e4d
 #endif
 
 #ifndef _start
 	#define _start 0x00700000
 #endif
 
-#ifndef testIrq
-	#define testIrq 0x00700134
+#ifndef start_time
+	#define start_time 0x00704b86
+#endif
+
+#ifndef __udivdi3
+	#define __udivdi3 0x00700140
+#endif
+
+#ifndef ullx
+	#define ullx 0x00704bc9
 #endif
 
 #ifndef ulPortSetInterruptMask
-	#define ulPortSetInterruptMask 0x00703d47
+	#define ulPortSetInterruptMask 0x00703ede
+#endif
+
+#ifndef __umoddi3
+	#define __umoddi3 0x00700260
 #endif
 
 #ifndef unmapPage
-	#define unmapPage 0x00700849
+	#define unmapPage 0x00700a96
 #endif
 
 #ifndef uxListRemove
-	#define uxListRemove 0x007017fc
+	#define uxListRemove 0x00701a85
 #endif
 
-#ifndef vApplicationMallocFailedHook
-	#define vApplicationMallocFailedHook 0x0070439f
+#ifndef uxQueueMessagesWaiting
+	#define uxQueueMessagesWaiting 0x00701457
 #endif
 
 #ifndef vAssertCalled
-	#define vAssertCalled 0x007043a1
+	#define vAssertCalled 0x00704e71
 #endif
 
 #ifndef vListInitialise
-	#define vListInitialise 0x007016b6
+	#define vListInitialise 0x0070193f
 #endif
 
 #ifndef vListInitialiseItem
-	#define vListInitialiseItem 0x007016f7
+	#define vListInitialiseItem 0x00701980
 #endif
 
 #ifndef vListInsert
-	#define vListInsert 0x00701763
+	#define vListInsert 0x007019ec
 #endif
 
 #ifndef vListInsertEnd
-	#define vListInsertEnd 0x00701704
+	#define vListInsertEnd 0x0070198d
 #endif
 
 #ifndef vPortAPICErrorHandler
-	#define vPortAPICErrorHandler 0x00703d54
+	#define vPortAPICErrorHandler 0x00703eeb
 #endif
 
 #ifndef vPortAPICErrorHandlerWrapper
@@ -313,31 +393,31 @@
 #endif
 
 #ifndef vPortAPICSpuriousHandler
-	#define vPortAPICSpuriousHandler 0x00700120
+	#define vPortAPICSpuriousHandler 0x0070011c
 #endif
 
 #ifndef vPortCentralInterruptHandler
-	#define vPortCentralInterruptHandler 0x00703d64
+	#define vPortCentralInterruptHandler 0x00703efb
 #endif
 
 #ifndef vPortCentralInterruptWrapper
-	#define vPortCentralInterruptWrapper 0x00700094
+	#define vPortCentralInterruptWrapper 0x00700090
 #endif
 
 #ifndef vPortClearInterruptMask
-	#define vPortClearInterruptMask 0x00703d52
+	#define vPortClearInterruptMask 0x00703ee9
 #endif
 
 #ifndef vPortEnterCritical
-	#define vPortEnterCritical 0x00703cfe
+	#define vPortEnterCritical 0x00703e95
 #endif
 
 #ifndef vPortExitCritical
-	#define vPortExitCritical 0x00703d10
+	#define vPortExitCritical 0x00703ea7
 #endif
 
 #ifndef vPortFree
-	#define vPortFree 0x00704593
+	#define vPortFree 0x00705057
 #endif
 
 #ifndef vPortStartFirstTask
@@ -353,131 +433,123 @@
 #endif
 
 #ifndef vQueueAddToRegistry
-	#define vQueueAddToRegistry 0x00701515
+	#define vQueueAddToRegistry 0x0070179e
 #endif
 
 #ifndef vQueueWaitForMessageRestricted
-	#define vQueueWaitForMessageRestricted 0x00701561
-#endif
-
-#ifndef vTaskCode
-	#define vTaskCode 0x00704281
-#endif
-
-#ifndef vTaskDelay
-	#define vTaskDelay 0x00701d95
+	#define vQueueWaitForMessageRestricted 0x007017ea
 #endif
 
 #ifndef vTaskMissedYield
-	#define vTaskMissedYield 0x00702894
+	#define vTaskMissedYield 0x00702a2b
 #endif
 
 #ifndef vTaskPlaceOnEventList
-	#define vTaskPlaceOnEventList 0x0070250d
+	#define vTaskPlaceOnEventList 0x007026a9
 #endif
 
 #ifndef vTaskPlaceOnEventListRestricted
-	#define vTaskPlaceOnEventListRestricted 0x007025c5
+	#define vTaskPlaceOnEventListRestricted 0x00702761
 #endif
 
 #ifndef vTaskPriorityInherit
-	#define vTaskPriorityInherit 0x00702cec
+	#define vTaskPriorityInherit 0x00702e3c
 #endif
 
 #ifndef vTaskSetTimeOutState
-	#define vTaskSetTimeOutState 0x00702775
+	#define vTaskSetTimeOutState 0x0070290c
 #endif
 
 #ifndef vTaskStartScheduler
-	#define vTaskStartScheduler 0x00701f3c
+	#define vTaskStartScheduler 0x00702120
 #endif
 
 #ifndef vTaskSuspendAll
-	#define vTaskSuspendAll 0x00701fcb
+	#define vTaskSuspendAll 0x007021af
 #endif
 
 #ifndef vTaskSwitchContext
-	#define vTaskSwitchContext 0x0070236e
+	#define vTaskSwitchContext 0x0070250a
 #endif
 
 #ifndef xPortStartScheduler
-	#define xPortStartScheduler 0x00703c32
+	#define xPortStartScheduler 0x00703dc9
 #endif
 
 #ifndef xQueueGenericCreate
-	#define xQueueGenericCreate 0x00700998
+	#define xQueueGenericCreate 0x00700be5
 #endif
 
 #ifndef xQueueGenericReceive
-	#define xQueueGenericReceive 0x00700f1c
+	#define xQueueGenericReceive 0x00701169
 #endif
 
 #ifndef xQueueGenericReset
-	#define xQueueGenericReset 0x00700881
+	#define xQueueGenericReset 0x00700ace
 #endif
 
 #ifndef xQueueGenericSend
-	#define xQueueGenericSend 0x00700a82
+	#define xQueueGenericSend 0x00700ccf
 #endif
 
 #ifndef xQueueGenericSendFromISR
-	#define xQueueGenericSendFromISR 0x00700d75
+	#define xQueueGenericSendFromISR 0x00700fc2
 #endif
 
 #ifndef xTaskCheckForTimeOut
-	#define xTaskCheckForTimeOut 0x007027b2
+	#define xTaskCheckForTimeOut 0x00702949
 #endif
 
 #ifndef xTaskGenericCreate
-	#define xTaskGenericCreate 0x00701b2a
+	#define xTaskGenericCreate 0x00701e58
 #endif
 
 #ifndef xTaskGenericNotify
-	#define xTaskGenericNotify 0x00702fa6
+	#define xTaskGenericNotify 0x007030f6
 #endif
 
 #ifndef xTaskGenericNotifyFromISR
-	#define xTaskGenericNotifyFromISR 0x00703133
+	#define xTaskGenericNotifyFromISR 0x0070327e
 #endif
 
 #ifndef xTaskGetSchedulerState
-	#define xTaskGetSchedulerState 0x00702cb3
+	#define xTaskGetSchedulerState 0x00702e03
 #endif
 
 #ifndef xTaskGetTickCount
-	#define xTaskGetTickCount 0x00702185
+	#define xTaskGetTickCount 0x00702321
 #endif
 
 #ifndef xTaskIncrementTick
-	#define xTaskIncrementTick 0x007021a3
+	#define xTaskIncrementTick 0x0070233f
 #endif
 
 #ifndef xTaskPartitionCreate
-	#define xTaskPartitionCreate 0x0070186b
+	#define xTaskPartitionCreate 0x00701af4
 #endif
 
 #ifndef xTaskPriorityDisinherit
-	#define xTaskPriorityDisinherit 0x00702e29
+	#define xTaskPriorityDisinherit 0x00702f79
 #endif
 
 #ifndef xTaskRemoveFromEventList
-	#define xTaskRemoveFromEventList 0x0070267d
+	#define xTaskRemoveFromEventList 0x00702819
 #endif
 
 #ifndef xTaskResumeAll
-	#define xTaskResumeAll 0x00702020
+	#define xTaskResumeAll 0x007021bc
 #endif
 
 #ifndef xTaskSwitchToProtectedTask
-	#define xTaskSwitchToProtectedTask 0x00701af6
+	#define xTaskSwitchToProtectedTask 0x00701e19
 #endif
 
 #ifndef xTimerCreateTimerTask
-	#define xTimerCreateTimerTask 0x00703303
+	#define xTimerCreateTimerTask 0x0070344e
 #endif
 
 #ifndef xTimerGenericCommand
-	#define xTimerGenericCommand 0x0070337a
+	#define xTimerGenericCommand 0x007034c5
 #endif
 
 #endif

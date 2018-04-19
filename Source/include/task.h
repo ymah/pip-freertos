@@ -195,7 +195,9 @@ typedef enum
 	NATIVE
 } taskType;
 
-
+void setNumberOfPartition(uint32_t num);
+uint32_t * getPartitionList();
+uint32_t getNumberOfPartition();
 /**
  * Defines the priority used by the idle task.  This must not be modified.
  *
