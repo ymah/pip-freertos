@@ -112,6 +112,7 @@ static int printi(char **out, int i, int b, int sg, int width, int pad, int letb
 
 int print( char **out, const char *format, va_list args )
 {
+
 	register int width, pad;
 	register int pc = 0;
 	char scr[2];
@@ -176,16 +177,18 @@ int print( char **out, const char *format, va_list args )
 
 int printf(const char *format, ...)
 {
+		Pip_Debug_Puts("[FreeRTOS-multiplexer] ");
         va_list args;
-        
+
         va_start( args, format );
         return print( 0, format, args );
 }
 
 int sprintf(char *out, const char *format, ...)
 {
+		Pip_Debug_Puts("[FreeRTOS-multiplexer] ");
         va_list args;
-        
+
         va_start( args, format );
         return print( &out, format, args );
 }
@@ -193,10 +196,11 @@ int sprintf(char *out, const char *format, ...)
 
 int snprintf( char *buf, unsigned int count, const char *format, ... )
 {
+		Pip_Debug_Puts("[FreeRTOS-multiplexer] ");
         va_list args;
-        
+
         ( void ) count;
-        
+
         va_start( args, format );
         return print( &buf, format, args );
 }
@@ -278,4 +282,3 @@ int	write( int i, char* c, int n)
 	(void)c;
 	return 0;
 }
-
