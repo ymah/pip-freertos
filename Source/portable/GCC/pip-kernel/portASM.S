@@ -208,17 +208,15 @@ vPortTimerHandler:
 
 	call Pip_VCLI
 	/*pusha*/
-	pushl %ebp
-	pushl %ebx
-	pushl %esi
-	pushl %edi
+	pusha
 
 /* Increment nesting count. */
 	add 	$1, ulInterruptNesting
 
   /*call printInfo*/
+		call Pip_VSTI
 	call xTaskIncrementTick
-	call Pip_VSTI
+
 
 	/* Is a switch to another task required? */
 	test	%eax, %eax
