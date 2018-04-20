@@ -532,15 +532,6 @@ static void prvSetupTimerInterrupt(void) {
 }
 /*-----------------------------------------------------------*/
 
-void startFirstTask() {
-	__asm volatile("movl (%0), %%esp"
-			:
-			:"r" (pxCurrentTCB)
-			:"%esp");
-	vsti();
-	__asm volatile("popa;iret");
-
-}
 
 BaseType_t xPortStartScheduler(void) {
 	BaseType_t xWord;

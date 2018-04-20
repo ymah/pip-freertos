@@ -46,7 +46,7 @@ void queueCreateService(uint32_t data2){
     printf("Error in mapping service result\r\n");
   }
   printf("resuming\r\n");
-  resume(partitionCaller, 0);
+  resume(partitionCaller, 1);
 }
 
 
@@ -85,7 +85,7 @@ void queueSendService(uint32_t data2){
   }
   printf("Resuming partition after sending\n",queue);
 
-  resume(partitionCaller, 0);
+  resume(partitionCaller, 1);
 }
 void queueReceiveService(uint32_t data2){
 
@@ -122,7 +122,7 @@ void queueReceiveService(uint32_t data2){
   }
   printf("Resuming partition after receiving\n");
 
-  resume(partitionCaller, 0);
+  resume(partitionCaller, 1);
 }
 
 
@@ -154,7 +154,7 @@ void sbrkService(uint32_t data2){
   }
   printf("return from sbrk service\r\n" );
 
-  resume(partitionCaller, 0);
+  resume(partitionCaller, 1);
 
 }
 
@@ -189,7 +189,7 @@ void channelService(uint32_t data2){
   }
 
   printf("return from channelCom service service\r\n" );
-  resume(partitionCaller, 0);
+  resume(partitionCaller, 1);
 
 }
 

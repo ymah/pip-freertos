@@ -8,10 +8,10 @@ all: freertos
 
 
 freertos:
-	cp ../toolchain.mk Demo/pip-kernel/ 
+	cp ../toolchain.mk Demo/pip-kernel/
 	make -C Demo/pip-kernel/ all
 	cp Demo/pip-kernel/Build/FreeRTOS.bin pip-freertos.bin
 
 clean:
 	make -C Demo/pip-kernel/ clean
-	rm pip-freertos.bin
+	rm -rf pip-freertos.bin

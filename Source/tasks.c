@@ -619,7 +619,7 @@ uint32_t xTaskPartitionCreate(uint32_t base, uint32_t length,
 	}
 	printf("\r\n");
   uint32_t stack_addr = (uint32_t)allocPage();
-	if (mapPageWrapper(stack_addr, (uint32_t)partitionEntry, (uint32_t)0xD100000 )) {
+	if (mapPageWrapper(stack_addr, (uint32_t)partitionEntry, (uint32_t)0xC000000 )) {
 		printf("Fail to map stack for the partition\r\n");
 		goto fail;
 	}
@@ -629,7 +629,7 @@ uint32_t xTaskPartitionCreate(uint32_t base, uint32_t length,
 	pcTCB->vidt = (vidt_t*) allocPage();
 	printf("Task VIDT at %x\r\n",pcTCB->vidt);
 	pcTCB->vidt->vint[0].eip = load_addr;
-	pcTCB->vidt->vint[0].esp = 0xD100000 + 0x1000 - 5*sizeof(uint32_t);
+	pcTCB->vidt->vint[0].esp = 0xC000000 + 0x1000 - sizeof(uint32_t);
 	pcTCB->vidt->flags = 0x1;
 
 	if (mapPageWrapper((uint32_t)pcTCB->vidt, (uint32_t)partitionEntry, (uint32_t) 0xFFFFF000)){
@@ -656,7 +656,7 @@ uint32_t xTaskSwitchToProtectedTask(){
 	if(!pxCurrentTCB->typeOfTask){
 		printf("Timer Switching to protected task %x\r\n",(uint32_t)pxCurrentTCB->pxTopOfStack);
 		//Pip_VSTI();
-		Pip_Resume((uint32_t)pxCurrentTCB->pxTopOfStack,0);
+		Pip_Resume((uint32_t)pxCurrentTCB->pxTopOfStack,1);
 	}
 
 
@@ -2277,7 +2277,7 @@ void vTaskSwitchContext(void) {
 			if(pxCurrentTCB->started)
 			{
 				printf("Resume Partition %x\r\n",pxCurrentTCB->pxTopOfStack);
-				resume((uint32_t)pxCurrentTCB->pxTopOfStack,0);
+				resume((uint32_t)pxCurrentTCB->pxTopOfStack,1);
 
 			}else{
 				printf("Starting Partition %x\r\n",pxCurrentTCB->pxTopOfStack);
