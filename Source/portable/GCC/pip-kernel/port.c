@@ -478,7 +478,7 @@ typedef struct tskTaskControlBlock {
 typedef tskTCB TCB_t;
 
 void toto() {
-	printf("toto\r\n");
+	printf("/!\/!\/!\TEST INTERRUPT MECHANISM /!\/!\/!\/!\\r\n");
 }
 extern TCB_t * pxCurrentTCB;
 #define restoreTaskCTX(ctx) 	__asm__ volatile("movl %0, %%eax \n\t \
@@ -579,7 +579,7 @@ BaseType_t xPortStartScheduler(void) {
 		//
 		printf("Starting partition : %x\r\n", (uint32_t) pxCurrentTCB);
 		pxCurrentTCB->started = 1;
-		resume((uint32_t)pxCurrentTCB->pxTopOfStack,0);
+		Pip_Notify((uint32_t)pxCurrentTCB->pxTopOfStack,0,0,0);
 		//dispatch((uint32_t) pxCurrentTCB->pxTopOfStack, 1, 0, 0);
 	}
 	return 0;

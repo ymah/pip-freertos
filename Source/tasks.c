@@ -611,7 +611,7 @@ uint32_t xTaskPartitionCreate(uint32_t base, uint32_t length,
 	printf("Mapping additional memory for child\r\n");
 	uint32_t page = allocPage();
 	int index;
-	for(index = 0;index < 1000;index++){
+	for(index = 0;index < 10000;index++){
 		if (mapPageWrapper((uint32_t)page, (uint32_t)partitionEntry, (uint32_t)( 0xA0000000+(index*0x1000))))
 			printf("Failed to map additional memory\r\n");
 		page = allocPage();
@@ -619,7 +619,7 @@ uint32_t xTaskPartitionCreate(uint32_t base, uint32_t length,
 	}
 	printf("\r\n");
   uint32_t stack_addr = (uint32_t)allocPage();
-	if (mapPageWrapper(stack_addr, (uint32_t)partitionEntry, (uint32_t) (0xF0000000 + 0x1000 - sizeof(uint32_t)))) {
+	if (mapPageWrapper(stack_addr, (uint32_t)partitionEntry, (uint32_t)0xD100000 )) {
 		printf("Fail to map stack for the partition\r\n");
 		goto fail;
 	}
@@ -629,7 +629,7 @@ uint32_t xTaskPartitionCreate(uint32_t base, uint32_t length,
 	pcTCB->vidt = (vidt_t*) allocPage();
 	printf("Task VIDT at %x\r\n",pcTCB->vidt);
 	pcTCB->vidt->vint[0].eip = load_addr;
-	pcTCB->vidt->vint[0].esp = 0xF0000000 + 0x1000 - sizeof(uint32_t);
+	pcTCB->vidt->vint[0].esp = 0xD100000 + 0x1000 - sizeof(uint32_t);
 	pcTCB->vidt->flags = 0x1;
 
 	if (mapPageWrapper((uint32_t)pcTCB->vidt, (uint32_t)partitionEntry, (uint32_t) 0xFFFFF000)){
@@ -652,11 +652,11 @@ uint32_t xTaskPartitionCreate(uint32_t base, uint32_t length,
 
 uint32_t xTaskSwitchToProtectedTask(){
 
-	//printf("Handle if the task is protected\r\n");
+	printf("Handle if the task is protected\r\n");
 	if(!pxCurrentTCB->typeOfTask){
-		//printf("Timer Switching to protected task %x\r\n",(uint32_t)pxCurrentTCB->pxTopOfStack);
-		Pip_VSTI();
-		Pip_Resume((uint32_t)pxCurrentTCB->pxTopOfStack,1);
+		printf("Timer Switching to protected task %x\r\n",(uint32_t)pxCurrentTCB->pxTopOfStack);
+		//Pip_VSTI();
+		Pip_Resume((uint32_t)pxCurrentTCB->pxTopOfStack,0);
 	}
 
 
@@ -2123,6 +2123,7 @@ BaseType_t xTaskIncrementTick(void) {
 		}
 	}
 #endif /* configUSE_PREEMPTION */
+	Pip_VSTI();
 	return xSwitchRequired;
 }
 /*-----------------------------------------------------------*/

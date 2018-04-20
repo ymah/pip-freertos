@@ -137,6 +137,7 @@ vPortYieldCall:
 	/* Find the location of pxCurrentTCB again - a callee saved register could
 	be used in place of eax to prevent this second load, but that then relies
 	on the compiler and other asm code. */
+	call xTaskSwitchToProtectedTask
 	movl 	pxCurrentTCB, %eax
 	movl	(%eax), %esp
 
@@ -179,8 +180,8 @@ vPortStartFirstTask:
 	.endif /* configSUPPORT_FPU */
 
 	//enableInterrupt
-    call Pip_VSTI
-    popa
+  call Pip_VSTI
+  popa
 	iret
 	/* Restore general purpose registers. */
 .endfunc
@@ -214,10 +215,7 @@ vPortTimerHandler:
 	add 	$1, ulInterruptNesting
 
   /*call printInfo*/
-		call Pip_VSTI
 	call xTaskIncrementTick
-
-
 	/* Is a switch to another task required? */
 	test	%eax, %eax
 	je	_skip_context_switch
@@ -232,6 +230,7 @@ _skip_context_switch:
 	stack is necessary. */
 	sub $1, ulInterruptNesting
 	/* Stack location is first item in the TCB. */
+
 	call xTaskSwitchToProtectedTask
 
 	movl pxCurrentTCB,%eax
