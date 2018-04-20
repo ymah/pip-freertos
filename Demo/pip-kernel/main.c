@@ -311,8 +311,8 @@ void main(pip_fpinfo* bootinfo)
     xTaskCreateProtected(partitions[0].start, "partition1", size, NULL, configMAX_PRIORITIES - 1, NULL);
 
     //domain 2
-    size = partitions[1].end - partitions[1].start;
-    xTaskCreateProtected(partitions[1].start, "partition2", size, NULL, configMAX_PRIORITIES - 1, NULL);
+    //size = partitions[1].end - partitions[1].start;
+    //xTaskCreateProtected(partitions[1].start, "partition2", size, NULL, configMAX_PRIORITIES - 1, NULL);
 
 
     //xTaskCreate(vTaskCode,"Test task",2*configMINIMAL_STACK_SIZE,NULL,configMAX_PRIORITIES-1,NULL);
@@ -320,7 +320,7 @@ void main(pip_fpinfo* bootinfo)
     //xTaskCreate(vTaskCode,"Test task",2*configMINIMAL_STACK_SIZE,NULL,configMAX_PRIORITIES-1,NULL);
 
     //xTaskCreate(hello_world_task, (signed char*)"Hello world task", 2048, 0, configMAX_PRIORITIES-1, 0);
-    qh = xQueueCreate(1, sizeof(int));
+    //qh = xQueueCreate(1, sizeof(int));
 
     //xTaskCreate(task_tx, (signed char*)"t1", 2*configMINIMAL_STACK_SIZE, 0, configMAX_PRIORITIES-1, 0);
     //xTaskCreate(task_rx, (signed char*)"t2", 2*configMINIMAL_STACK_SIZE, 0, configMAX_PRIORITIES-1, 0);

@@ -629,7 +629,7 @@ uint32_t xTaskPartitionCreate(uint32_t base, uint32_t length,
 	pcTCB->vidt = (vidt_t*) allocPage();
 	printf("Task VIDT at %x\r\n",pcTCB->vidt);
 	pcTCB->vidt->vint[0].eip = load_addr;
-	pcTCB->vidt->vint[0].esp = 0xD100000 + 0x1000 - sizeof(uint32_t);
+	pcTCB->vidt->vint[0].esp = 0xD100000 + 0x1000 - 5*sizeof(uint32_t);
 	pcTCB->vidt->flags = 0x1;
 
 	if (mapPageWrapper((uint32_t)pcTCB->vidt, (uint32_t)partitionEntry, (uint32_t) 0xFFFFF000)){
