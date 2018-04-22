@@ -196,10 +196,10 @@ typedef struct tskTaskControlBlock {
 	volatile eNotifyValue eNotifyState;
 #endif
 
-  uint32_t *services;
+	vidt_t *vidt;
 	uint32_t typeOfTask;
 	uint32_t started;
-	vidt_t *vidt;
+
 
 } tskTCB;
 
@@ -595,49 +595,65 @@ uint32_t xTaskPartitionCreate(uint32_t base, uint32_t length,
 	printf("Mapping task partition...\r\n");
 
 	printf("Mapping partition : \r\n");
-	printf("[");
+
 	for (offset = 0; offset < length; offset += 0x1000) {
 
-		if (mapPageWrapper((void*) (base + offset), partitionEntry,
-				(void*) (load_addr + offset))) {
+		if (mapPageWrapper((uint32_t*) (base + offset), partitionEntry,(uint32_t*) (load_addr + offset))) {
 			printf("Error during mapping %x into partition at \r\n",base+offset,load_addr+offset);
 			goto fail;
 		}
-		if (offset / 0x1000 == 0)
-			printf("#");
 	}
-	printf("]\r\n");
-	printf("Partition mapped\r\n");
-	printf("Mapping additional memory for child\r\n");
-	uint32_t page = allocPage();
-	int index;
-	for(index = 0;index < 10000;index++){
-		if (mapPageWrapper((uint32_t)page, (uint32_t)partitionEntry, (uint32_t)( 0xA0000000+(index*0x1000))))
-			printf("Failed to map additional memory\r\n");
-		page = allocPage();
-		//printf(".");
-	}
-	printf("\r\n");
-  uint32_t stack_addr = (uint32_t)allocPage();
-	if (mapPageWrapper(stack_addr, (uint32_t)partitionEntry, (uint32_t)0xC000000 )) {
+	uint32_t lastPage = load_addr + offset;
+	printf("Partition mapped, last page : %x\r\n",lastPage);
+
+
+	printf("Mapping stack... ");
+	uint32_t stack_off = 0;
+	uint32_t stack_addr;
+	for(stack_off = 0; stack_off <= 0x100000; stack_off+=0x1000)
+	{
+	      stack_addr = (uint32_t)allocPage();
+		    if(mapPageWrapper((uint32_t)stack_addr, (uint32_t)partitionEntry, (uint32_t)0x2000000 + (stack_off)))
+		    {
+			    printf("Couldn't map stack.\n");
+			    goto fail;
+		    }
+	    }
+	puts("\n");
+
+	printf("Done.\r\n");
+	printf("Mapping interrupt stack...\r\n");
+  uint32_t isstack_addr = (uint32_t*)allocPage();
+	if (mapPageWrapper(isstack_addr, (uint32_t)partitionEntry, (uint32_t)0x804000 )) {
 		printf("Fail to map stack for the partition\r\n");
 		goto fail;
 	}
 
 	printf("Done.\r\n");
-
 	pcTCB->vidt = (vidt_t*) allocPage();
 	printf("Task VIDT at %x\r\n",pcTCB->vidt);
 	pcTCB->vidt->vint[0].eip = load_addr;
-	pcTCB->vidt->vint[0].esp = 0xC000000 + 0x1000 - sizeof(uint32_t);
+	pcTCB->vidt->vint[0].esp = 0x2100000 + 0x1000 - sizeof(uint32_t);
 	pcTCB->vidt->flags = 0x1;
 
-	if (mapPageWrapper((uint32_t)pcTCB->vidt, (uint32_t)partitionEntry, (uint32_t) 0xFFFFF000)){
+
+
+	if (mapPageWrapper((uint32_t)pcTCB->vidt, (uint32_t)partitionEntry, (uint32_t)0xFFFFF000)){
 			printf("Failed to map Vidt\r\n");
 			goto fail;
 		}
-
+		printf("Mapping additional memory for child\r\n");
+		uint32_t page = allocPage();
+		int index;
+		for(index = 0;index < 10000;index++){
+			if (mapPageWrapper((uint32_t)page, (uint32_t)partitionEntry, (uint32_t*)( 0xA0000000+(index*0x1000))))
+				printf("Failed to map additional memory\r\n");
+			page = allocPage();
+			//printf(".");
+		}
 	pcTCB->pxTopOfStack = partitionEntry;
+
+
 
 	return pcTCB->pxTopOfStack;
 
@@ -654,9 +670,20 @@ uint32_t xTaskSwitchToProtectedTask(){
 
 	printf("Handle if the task is protected\r\n");
 	if(!pxCurrentTCB->typeOfTask){
-		printf("Timer Switching to protected task %x\r\n",(uint32_t)pxCurrentTCB->pxTopOfStack);
 		//Pip_VSTI();
-		Pip_Resume((uint32_t)pxCurrentTCB->pxTopOfStack,1);
+		//Pip_Resume((uint32_t*)pxCurrentTCB->pxTopOfStack,1);
+		if(pxCurrentTCB->started){
+
+			printf("Timer Switching to protected task %x\r\n",(uint32_t)pxCurrentTCB->pxTopOfStack);
+			if(pxCurrentTCB->vidt->flags){
+				printf("Resuming partition \r\n");
+				Pip_Resume((uint32_t*)pxCurrentTCB->pxTopOfStack,1);
+			}
+			Pip_Notify((uint32_t) pxCurrentTCB->pxTopOfStack, 33, 0, 0);
+		}else{
+			printf("Starting protected task %x\r\n",(uint32_t)pxCurrentTCB->pxTopOfStack);
+			Pip_Notify((uint32_t) pxCurrentTCB->pxTopOfStack, 0, 0, 0);
+		}
 	}
 
 
@@ -2277,16 +2304,19 @@ void vTaskSwitchContext(void) {
 			if(pxCurrentTCB->started)
 			{
 				printf("Resume Partition %x\r\n",pxCurrentTCB->pxTopOfStack);
-				resume((uint32_t)pxCurrentTCB->pxTopOfStack,1);
+				if(pxCurrentTCB->vidt->flags){
+					Pip_Resume((uint32_t*)pxCurrentTCB->pxTopOfStack,1);
+				}
+				Pip_Notify((uint32_t) pxCurrentTCB->pxTopOfStack, 33, 0, 0);
 
 			}else{
 				printf("Starting Partition %x\r\n",pxCurrentTCB->pxTopOfStack);
 				pxCurrentTCB->started = 1;
 			    printf("Starting\r\n");
-                Pip_Notify((uint32_t) pxCurrentTCB->pxTopOfStack, 0, 0, 0);
+					Pip_VSTI();
+          Pip_Notify((uint32_t) pxCurrentTCB->pxTopOfStack, 0, 0, 0);
 			}
 
-			//;
 		}
 
         traceTASK_SWITCHED_IN();

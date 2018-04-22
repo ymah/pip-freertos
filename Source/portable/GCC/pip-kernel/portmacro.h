@@ -288,7 +288,7 @@ BaseType_t xPortInstallInterruptHandler( ISR_Handler_t pxHandler, uint32_t ulVec
 		This method can always be used.  It is slightly more complex than
 		method 1 but benefits from a faster interrupt entry time. */
 	#warning config_USE_COMMON_INTERRUPT_ENTRY_POINT was not defined in FreeRTOSConfig.h and has been defaulted to 1.
-	#define configUSE_COMMON_INTERRUPT_ENTRY_POINT	1
+	#define configUSE_COMMON_INTERRUPT_ENTRY_POINT	0
 #endif
 
 #ifndef configISR_STACK_SIZE

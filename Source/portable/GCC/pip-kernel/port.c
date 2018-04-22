@@ -339,30 +339,6 @@ static void prvSetInterruptGate(uint8_t ucNumber,
 }
 /*-----------------------------------------------------------*/
 
-void vPortSetupIDT(void) {
-	uint32_t ulNum;
-	IDTPointer_t xIDT;
-
-#if ( configUSE_COMMON_INTERRUPT_ENTRY_POINT == 1 )
-	{
-		for (ulNum = 0; ulNum < portNUM_VECTORS; ulNum++) {
-			/* If a handler has not already been installed on this vector. */
-			if ((xInterruptDescriptorTable[ulNum].usISRLow == 0x00)
-					&& (xInterruptDescriptorTable[ulNum].usISRHigh == 0x00)) {
-				prvSetInterruptGate((uint8_t) ulNum,
-						vPortCentralInterruptWrapper, portIDT_FLAGS);
-			}
-		}
-	}
-#endif /* configUSE_COMMON_INTERRUPT_ENTRY_POINT */
-
-	/* Set IDT address. */
-	xIDT.ulTableBase = (uint32_t) xInterruptDescriptorTable;
-	xIDT.usTableLimit = sizeof(xInterruptDescriptorTable) - 1;
-
-	/* Set IDT in CPU. */
-	__asm volatile( "lidt %0" :: "m" (xIDT) );
-}
 /*-----------------------------------------------------------*/
 
 static void prvTaskExitError(void) {
@@ -465,11 +441,10 @@ typedef struct tskTaskControlBlock {
 	volatile uint32_t ulNotifiedValue;
 	volatile eNotifyValue eNotifyState;
 #endif
-
-    uint32_t * services;
+	vidt_t *vidt;
 	uint32_t typeOfTask;
 	uint32_t started;
-	vidt_t *vidt;
+
 
 } tskTCB;
 
@@ -571,7 +546,6 @@ BaseType_t xPortStartScheduler(void) {
 		printf("Starting partition : %x\r\n", (uint32_t) pxCurrentTCB);
 		pxCurrentTCB->started = 1;
 		Pip_Notify((uint32_t)pxCurrentTCB->pxTopOfStack,0,0,0);
-		//dispatch((uint32_t) pxCurrentTCB->pxTopOfStack, 1, 0, 0);
 	}
 	return 0;
 }
