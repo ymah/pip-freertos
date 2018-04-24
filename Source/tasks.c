@@ -603,24 +603,37 @@ uint32_t xTaskPartitionCreate(uint32_t base, uint32_t length,
 			goto fail;
 		}
 	}
+
+
+
 	uint32_t lastPage = load_addr + offset;
 	printf("Partition mapped, last page : %x\r\n",lastPage);
 
 
+	printf("Mapping additional memory for child\r\n");
+	uint32_t page;
+
+	int index;
+	for(index = 0;index < MAX_PAGE;index++){
+		page = allocPage();
+		if (mapPageWrapper((uint32_t)page, (uint32_t)partitionEntry, (uint32_t*)( 0x1C00000+0x1000+(index*0x1000))))
+			printf("Failed to map additional memory\r\n");
+		printf("Mapping %x at %x \r\n",page,0x1C00000+0x1000+(index*0x1000));
+	}
+	printf("Done until %x.\r\n",lastPage+0x1000);
+
 	printf("Mapping stack... ");
 	uint32_t stack_off = 0;
 	uint32_t stack_addr;
-	for(stack_off = 0; stack_off <= 0x100000; stack_off+=0x1000)
+	for(stack_off = 0; stack_off <= 0x10000; stack_off+=0x1000)
 	{
 	      stack_addr = (uint32_t)allocPage();
-		    if(mapPageWrapper((uint32_t)stack_addr, (uint32_t)partitionEntry, (uint32_t)0x2000000 + (stack_off)))
+		    if(mapPageWrapper((uint32_t)stack_addr, (uint32_t)partitionEntry, (uint32_t)0x500000 + (stack_off)))
 		    {
-			    printf("Couldn't map stack.\n");
+			    printf("Couldn't map stack.\r\n");
 			    goto fail;
 		    }
 	    }
-	puts("\n");
-
 	printf("Done.\r\n");
 	printf("Mapping interrupt stack...\r\n");
   uint32_t isstack_addr = (uint32_t*)allocPage();
@@ -633,7 +646,7 @@ uint32_t xTaskPartitionCreate(uint32_t base, uint32_t length,
 	pcTCB->vidt = (vidt_t*) allocPage();
 	printf("Task VIDT at %x\r\n",pcTCB->vidt);
 	pcTCB->vidt->vint[0].eip = load_addr;
-	pcTCB->vidt->vint[0].esp = 0x2100000 + 0x1000 - sizeof(uint32_t);
+	pcTCB->vidt->vint[0].esp = 0x510000 + 0x1000 - sizeof(uint32_t);
 	pcTCB->vidt->flags = 0x1;
 
 
@@ -642,15 +655,8 @@ uint32_t xTaskPartitionCreate(uint32_t base, uint32_t length,
 			printf("Failed to map Vidt\r\n");
 			goto fail;
 		}
-		printf("Mapping additional memory for child\r\n");
-		uint32_t page = allocPage();
-		int index;
-		for(index = 0;index < 10000;index++){
-			if (mapPageWrapper((uint32_t)page, (uint32_t)partitionEntry, (uint32_t*)( 0xA0000000+(index*0x1000))))
-				printf("Failed to map additional memory\r\n");
-			page = allocPage();
-			//printf(".");
-		}
+
+
 	pcTCB->pxTopOfStack = partitionEntry;
 
 
@@ -659,29 +665,43 @@ uint32_t xTaskPartitionCreate(uint32_t base, uint32_t length,
 
 
 	fail:
+	printf("Failed...\r\n");
+	for (;;);
 
-	for (;;)
-		printf("Failed...\r\n");
 
 }
+extern uint32_t UART_MMIO_Base;
+extern uint32_t UART_PCI_Base;
+void enableSerialInChild(){
 
+		//printf("Mapping UART { 0x%x , 0x%x } in child 0x%x\r\n",UART_MMIO_Base,UART_PCI_Base,pxCurrentTCB->pxTopOfStack);
+		mapPageWrapper((uint32_t)UART_MMIO_Base,(uint32_t)pxCurrentTCB->pxTopOfStack,(uint32_t)UART_MMIO_Base);
+		mapPageWrapper((uint32_t)UART_PCI_Base,(uint32_t)pxCurrentTCB->pxTopOfStack,(uint32_t)(UART_PCI_Base));
+}
 
+void disableSerialInChild(){
+	Pip_RemoveVAddr((uint32_t)pxCurrentTCB->pxTopOfStack,UART_MMIO_Base);
+	Pip_RemoveVAddr((uint32_t)pxCurrentTCB->pxTopOfStack,UART_PCI_Base);
+}
 uint32_t xTaskSwitchToProtectedTask(){
 
 	printf("Handle if the task is protected\r\n");
 	if(!pxCurrentTCB->typeOfTask){
 		//Pip_VSTI();
-		//Pip_Resume((uint32_t*)pxCurrentTCB->pxTopOfStack,1);
 		if(pxCurrentTCB->started){
 
 			printf("Timer Switching to protected task %x\r\n",(uint32_t)pxCurrentTCB->pxTopOfStack);
 			if(pxCurrentTCB->vidt->flags){
 				printf("Resuming partition \r\n");
+				enableSerialInChild();
 				Pip_Resume((uint32_t*)pxCurrentTCB->pxTopOfStack,1);
 			}
+			enableSerialInChild();
 			Pip_Notify((uint32_t) pxCurrentTCB->pxTopOfStack, 33, 0, 0);
 		}else{
 			printf("Starting protected task %x\r\n",(uint32_t)pxCurrentTCB->pxTopOfStack);
+			pxCurrentTCB->started = 1;
+			enableSerialInChild();
 			Pip_Notify((uint32_t) pxCurrentTCB->pxTopOfStack, 0, 0, 0);
 		}
 	}
@@ -2296,14 +2316,16 @@ void vTaskSwitchContext(void) {
 		;
 
 		printf("Next highest priority task is : 0x%x with type %d\r\n",
-				pxCurrentTCB->pxTopOfStack, pxCurrentTCB->typeOfTask);
+		pxCurrentTCB->pxTopOfStack, pxCurrentTCB->typeOfTask);
 
-        if (!pxCurrentTCB->typeOfTask) {
+		if (!pxCurrentTCB->typeOfTask) {
 			printf("Dispatching to the next protected Task %x\r\n",pxCurrentTCB->typeOfTask);
 
 			if(pxCurrentTCB->started)
 			{
 				printf("Resume Partition %x\r\n",pxCurrentTCB->pxTopOfStack);
+				enableSerialInChild();
+				printf("Finished");
 				if(pxCurrentTCB->vidt->flags){
 					Pip_Resume((uint32_t*)pxCurrentTCB->pxTopOfStack,1);
 				}
@@ -2312,9 +2334,10 @@ void vTaskSwitchContext(void) {
 			}else{
 				printf("Starting Partition %x\r\n",pxCurrentTCB->pxTopOfStack);
 				pxCurrentTCB->started = 1;
-			    printf("Starting\r\n");
-					Pip_VSTI();
-          Pip_Notify((uint32_t) pxCurrentTCB->pxTopOfStack, 0, 0, 0);
+				printf("Starting\r\n");
+				enableSerialInChild();
+				Pip_VSTI();
+				Pip_Notify((uint32_t) pxCurrentTCB->pxTopOfStack, 0, 0, 0);
 			}
 
 		}

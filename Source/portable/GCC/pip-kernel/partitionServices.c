@@ -19,6 +19,8 @@ int checkAccess(){
   return 1;
 }
 
+extern enableSerialInChild();
+extern disableSerialInChild();
 uint32_t partitionCaller;
 void queueCreateService(uint32_t data2){
 
@@ -46,6 +48,7 @@ void queueCreateService(uint32_t data2){
     printf("Error in mapping service result\r\n");
   }
   printf("resuming\r\n");
+    enableSerialInChild();
   resume(partitionCaller, 1);
 }
 
@@ -84,7 +87,7 @@ void queueSendService(uint32_t data2){
     printf("Error in mapping service result\r\n");
   }
   printf("Resuming partition after sending\n",queue);
-
+  enableSerialInChild();
   resume(partitionCaller, 1);
 }
 void queueReceiveService(uint32_t data2){
@@ -121,7 +124,7 @@ void queueReceiveService(uint32_t data2){
     printf("Error in mapping service result\r\n");
   }
   printf("Resuming partition after receiving\n");
-
+  enableSerialInChild();
   resume(partitionCaller, 1);
 }
 
@@ -153,7 +156,7 @@ void sbrkService(uint32_t data2){
     printf("Error in mapping service result\r\n");
   }
   printf("return from sbrk service\r\n" );
-
+  enableSerialInChild();
   resume(partitionCaller, 1);
 
 }
@@ -189,6 +192,7 @@ void channelService(uint32_t data2){
   }
 
   printf("return from channelCom service service\r\n" );
+  enableSerialInChild();
   resume(partitionCaller, 1);
 
 }
@@ -196,6 +200,7 @@ void channelService(uint32_t data2){
 
 
 INTERRUPT_HANDLER(serviceRoutineAsm,serviceRoutine)
+  disableSerialInChild();
   printf("Starting service ");
   printf("Data1 %d, data2 %x\r\n",data1,data2);
   partitionCaller = caller;

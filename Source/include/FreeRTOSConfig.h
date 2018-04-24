@@ -246,4 +246,6 @@ header file. */
 /* Compiler specifics. */
 #define fabs( x )			__builtin_fabs( ( x ) )
 
+
+#define MAX_PAGE 50
 #endif /* FREERTOS_CONFIG_H */

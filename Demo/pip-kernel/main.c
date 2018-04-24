@@ -70,7 +70,6 @@
 #include <pip/debug.h>
 #include <pip/paging.h>
 #include <pip/compat.h>
-
 #include "dhry.h"
 #include "aes.h"
 #include "cpuidh.h"
@@ -252,39 +251,14 @@ void task_rx(void* p)
         }
     }
 }
-void main(pip_fpinfo* bootinfo)
+void main()
 {
 
-    Pip_Debug_Puts("Hello From FreeRTOS\r\n");
+    pip_fpinfo * bootinfo = (pip_fpinfo*)0xFFFFC000;
+    printf("Hello From FreeRTOS\r\n");
     printf("We're going to start the Real-time \r\n");
 
     uint64_t User_Time;
-
-
-    start_time();
-
-
-    /*DEMO*/
-	//vCreateBlockTimeTasks();
-    //vStartSemaphoreTasks( mainSEM_TEST_PRIORITY );
-	//vStartGenericQueueTasks( mainGEN_QUEUE_TASK_PRIORITY );
-	//vStartQueuePeekTasks();
-	//vStartCountingSemaphoreTasks();
-	//vStartDynamicPriorityTasks();
-	//vStartQueueOverwriteTask( mainQUEUE_OVERWRITE_TASK_PRIORITY );
-	//vStartQueueSetTasks();
-	//vStartRecursiveMutexTasks();
-	//vStartEventGroupTasks();
-	//vStartTimerDemoTask( mainTIMER_TEST_PERIOD );
-	//vStartBlockingQueueTasks( mainBLOCK_Q_PRIORITY );
-	//vStartTaskNotifyTask();
-	//vStartInterruptQueueTasks();
-
-
-
-
-
-    end_time();
 
     User_Time = milliSecs;
 
@@ -298,6 +272,7 @@ void main(pip_fpinfo* bootinfo)
 
 
     //Initialize the avaible pages
+
     uint32_t paging = initPaging((void*)bootinfo->membegin,(void*)bootinfo->memend);
 
     setNumberOfPartition(1);
@@ -312,7 +287,7 @@ void main(pip_fpinfo* bootinfo)
 
     //domain 2
     size = partitions[1].end - partitions[1].start;
-    xTaskCreateProtected(partitions[1].start, "partition2", size, NULL, configMAX_PRIORITIES - 1, NULL);
+    //xTaskCreateProtected(partitions[1].start, "partition2", size, NULL, configMAX_PRIORITIES - 1, NULL);
 
 
     //xTaskCreate(vTaskCode,"Test task",2*configMINIMAL_STACK_SIZE,NULL,configMAX_PRIORITIES-1,NULL);

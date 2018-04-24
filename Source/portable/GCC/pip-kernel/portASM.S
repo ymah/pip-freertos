@@ -203,11 +203,13 @@ vPortAPICErrorHandlerWrapper:
 .func vPortTimerHandler
 .extern start_time
 .extern printInfo
+.extern disableSerialInChild
 vPortTimerHandler:
 
 	/* Save general purpose registers. */
 
 	call Pip_VCLI
+	call disableSerialInChild
 	/*pusha*/
 	pusha
 
@@ -296,4 +298,5 @@ vPortAPICSpuriousHandler:
 	INTERRUPT_HANDLER(pfAsm,pfHandler)
 	INTERRUPT_HANDLER(keyAsm,keyHandler)
 	INTERRUPT_HANDLER(serviceRoutineAsm,serviceRoutine)
+	INTERRUPT_HANDLER(validChildAsm,validChild)
 .end

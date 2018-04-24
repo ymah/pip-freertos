@@ -470,7 +470,10 @@ extern void irqTimer();
 extern void resetAsm();
 extern void testIrq();
 
-
+INTERRUPT_HANDLER(validChildAsm,validChild)
+	printf("My child told me something...\r\n");
+	__asm__ volatile("call vPortTimerHandler");
+END_OF_INTERRUPT
 INTERRUPT_HANDLER(pfAsm,pfHandler)
     printf("Page fault at %x %x %x\r\n",data1,data2,caller);
     Pip_VCLI();
@@ -498,9 +501,11 @@ static void prvSetupTimerInterrupt(void) {
 	printf("Init interrupts handlers\r\n");
 	//registerInterrupt(0, &resetAsm, (uint32_t*) 0x0);
 	registerInterrupt(33, &vPortTimerHandler, (uint32_t*) 0x3020000);
+	registerInterrupt(40, &vPortTimerHandler, (uint32_t*) 0x3020000);
 	registerInterrupt(34, &keyHandler, (uint32_t*) 0x3040000);
 	registerInterrupt(15, &pfHandler, (uint32_t*) 0x3030000);
 	registerInterrupt(14, &handleGPF, (uint32_t*) 0x3040000);
+	registerInterrupt(88, &validChild, (uint32_t*) 0x3020000);
 	initPartitionServices();
 	printf("Interrupts handlers seems to be ok\r\n");
 
