@@ -618,7 +618,7 @@ uint32_t xTaskPartitionCreate(uint32_t base, uint32_t length,
 		page = allocPage();
 		if (mapPageWrapper((uint32_t)page, (uint32_t)partitionEntry, (uint32_t*)( 0x1C00000+0x1000+(index*0x1000))))
 			printf("Failed to map additional memory\r\n");
-		printf("Mapping %x at %x \r\n",page,0x1C00000+0x1000+(index*0x1000));
+		//printf("Mapping %x at %x \r\n",page,0x1C00000+0x1000+(index*0x1000));
 	}
 	printf("Done until %x.\r\n",lastPage+0x1000);
 
@@ -670,8 +670,8 @@ uint32_t xTaskPartitionCreate(uint32_t base, uint32_t length,
 
 
 }
-extern uint32_t UART_MMIO_Base;
-extern uint32_t UART_PCI_Base;
+uint32_t UART_MMIO_Base;
+uint32_t UART_PCI_Base;
 void enableSerialInChild(){
 
 		//printf("Mapping UART { 0x%x , 0x%x } in child 0x%x\r\n",UART_MMIO_Base,UART_PCI_Base,pxCurrentTCB->pxTopOfStack);
