@@ -613,14 +613,13 @@ uint32_t xTaskPartitionCreate(uint32_t base, uint32_t length,
 	printf("Mapping additional memory for child\r\n");
 	uint32_t page;
 
-	int index;
-	for(index = 0;index < MAX_PAGE;index++){
-		page = allocPage();
-		if (mapPageWrapper((uint32_t)page, (uint32_t)partitionEntry, (uint32_t*)( 0x1C00000+0x1000+(index*0x1000))))
-			printf("Failed to map additional memory\r\n");
-		//printf("Mapping %x at %x \r\n",page,0x1C00000+0x1000+(index*0x1000));
-	}
-	printf("Done until %x.\r\n",lastPage+0x1000);
+	// int index;
+	// for(index = 0;index < (MAX_PAGE * 0x1000);index+=0x1000){
+	// 	page = allocPage();
+	// 	if (mapPageWrapper((uint32_t)page, (uint32_t)partitionEntry, (uint32_t*)( ADDR_TO_MAP+index)))
+	// 		printf("Failed to map additional memory %x at %x\r\n",page,ADDR_TO_MAP+index);
+	// 	//printf("Mapping %x at %x \r\n",page,0x1C00000+0x1000+(index*0x1000));
+	// }
 
 	printf("Mapping stack... ");
 	uint32_t stack_off = 0;
@@ -670,18 +669,27 @@ uint32_t xTaskPartitionCreate(uint32_t base, uint32_t length,
 
 
 }
-uint32_t UART_MMIO_Base;
-uint32_t UART_PCI_Base;
+
+#define EC_BASE 0xE0000000
+#define UART_MMIO_BSE 0x9000B000
+#define UART_PCI_BSE 0xE00A5000
+extern uint32_t UART_MMIO_Base;
+extern uint32_t UART_PCI_Base;
 void enableSerialInChild(){
 
-		//printf("Mapping UART { 0x%x , 0x%x } in child 0x%x\r\n",UART_MMIO_Base,UART_PCI_Base,pxCurrentTCB->pxTopOfStack);
-		mapPageWrapper((uint32_t)UART_MMIO_Base,(uint32_t)pxCurrentTCB->pxTopOfStack,(uint32_t)UART_MMIO_Base);
-		mapPageWrapper((uint32_t)UART_PCI_Base,(uint32_t)pxCurrentTCB->pxTopOfStack,(uint32_t)(UART_PCI_Base));
+		printf("Mapping UART { 0x%x , 0x%x } in child 0x%x\r\n",UART_MMIO_Base,UART_PCI_Base,pxCurrentTCB->pxTopOfStack);
+		mapPageWrapper((uint32_t)EC_BASE,(uint32_t)pxCurrentTCB->pxTopOfStack,EC_BASE);
+		mapPageWrapper((uint32_t)UART_MMIO_Base,(uint32_t)pxCurrentTCB->pxTopOfStack,UART_MMIO_BSE);
+		mapPageWrapper((uint32_t)UART_PCI_Base,(uint32_t)pxCurrentTCB->pxTopOfStack,UART_PCI_BSE);
 }
 
 void disableSerialInChild(){
-	Pip_RemoveVAddr((uint32_t)pxCurrentTCB->pxTopOfStack,UART_MMIO_Base);
-	Pip_RemoveVAddr((uint32_t)pxCurrentTCB->pxTopOfStack,UART_PCI_Base);
+	if(pxCurrentTCB->typeOfTask)
+		return ;
+	Pip_RemoveVAddr((uint32_t)pxCurrentTCB->pxTopOfStack,EC_BASE);
+	Pip_RemoveVAddr((uint32_t)pxCurrentTCB->pxTopOfStack,UART_MMIO_BSE);
+	Pip_RemoveVAddr((uint32_t)pxCurrentTCB->pxTopOfStack,UART_PCI_BSE);
+	printf("Getting back serial %x %x from %x\r\n",UART_MMIO_Base,UART_PCI_Base,pxCurrentTCB->pxTopOfStack);
 }
 uint32_t xTaskSwitchToProtectedTask(){
 
@@ -2314,7 +2322,6 @@ void vTaskSwitchContext(void) {
 		 optimised asm code. */
 		taskSELECT_HIGHEST_PRIORITY_TASK()
 		;
-
 		printf("Next highest priority task is : 0x%x with type %d\r\n",
 		pxCurrentTCB->pxTopOfStack, pxCurrentTCB->typeOfTask);
 
