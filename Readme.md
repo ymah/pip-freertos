@@ -11,6 +11,10 @@
 ``` C
 initPaging((void*)bootinfo->membegin,(void*)bootinfo->memend);
 ```
+or in FreeRTOS as support for subpartition :
+``` C
+  initPaging((void*)0x1C00000,(void*)(0x1C00000+(MAX_PAGE*0x1000)));
+```
 bootinfo is a C struct available for each root partition, given by Pip through the entrypoint first parameter.
 
 ## To add new task-partitions :
