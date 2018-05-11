@@ -88,7 +88,7 @@
 #include <pip/api.h>
 #include <pip/vidt.h>
 #include <pip/compat.h>
-
+#include <pip/fpinfo.h>
 #include "cpuidh.h"
 /* Lint e961 and e750 are suppressed as a MISRA exception justified because ther
  MPU ports require MPU_WRAPPERS_INCLUDED_FROM_API_FILE to be defined for the
@@ -564,6 +564,15 @@ static char *prvWriteNameToBuffer( char *pcBuffer, const char *pcTaskName );
 #endif
 
 
+#define EC_BASE 0xE0000000
+#define UART_MMIO_BSE 0x9000B000
+#define UART_PCI_BSE 0xE00A5000
+extern uint32_t * UART_MMIO_Base;
+extern uint32_t * UART_PCI_Base;
+static int next = 0;
+
+
+
 
 /*-----------------------------------------------------------*/
 
@@ -612,14 +621,28 @@ uint32_t xTaskPartitionCreate(uint32_t base, uint32_t length,
 
 	printf("Mapping additional memory for child\r\n");
 	uint32_t page;
+	pip_fpinfo * allocMem = (pip_fpinfo*) allocPage();
 
-	// int index;
-	// for(index = 0;index < (MAX_PAGE * 0x1000);index+=0x1000){
-	// 	page = allocPage();
-	// 	if (mapPageWrapper((uint32_t)page, (uint32_t)partitionEntry, (uint32_t*)( ADDR_TO_MAP+index)))
-	// 		printf("Failed to map additional memory %x at %x\r\n",page,ADDR_TO_MAP+index);
-	// 	//printf("Mapping %x at %x \r\n",page,0x1C00000+0x1000+(index*0x1000));
-	// }
+	allocMem->magic = FPINFO_MAGIC;
+	allocMem->membegin = ADDR_TO_MAP;
+	allocMem->memend = ADDR_TO_MAP+(MAX_PAGE * 0x1000);
+
+
+	int index;
+
+
+	for(index = 0;index < MAX_PAGE;index++){
+		page = allocPage();
+		if (mapPageWrapper((uint32_t)page, (uint32_t)partitionEntry, (uint32_t*)( ADDR_TO_MAP+(index*0x1000))))
+			printf("Failed to map additional memory %x at %x\r\n",page,ADDR_TO_MAP+index*0x1000);
+
+	}
+
+	printf("Index %d, MAX_PAGE %d\r\n",index,MAX_PAGE);
+	if (mapPageWrapper(allocMem, (uint32_t)partitionEntry, (uint32_t)0xFFFFC000 )) {
+		printf("Fail to map additional memory info\r\n");
+		goto fail;
+	}
 
 	printf("Mapping stack... ");
 	uint32_t stack_off = 0;
@@ -627,7 +650,7 @@ uint32_t xTaskPartitionCreate(uint32_t base, uint32_t length,
 	for(stack_off = 0; stack_off <= 0x10000; stack_off+=0x1000)
 	{
 	      stack_addr = (uint32_t)allocPage();
-		    if(mapPageWrapper((uint32_t)stack_addr, (uint32_t)partitionEntry, (uint32_t)0x500000 + (stack_off)))
+		    if(mapPageWrapper((uint32_t)stack_addr, (uint32_t)partitionEntry, (uint32_t)0xB10000 + (stack_off)))
 		    {
 			    printf("Couldn't map stack.\r\n");
 			    goto fail;
@@ -636,7 +659,7 @@ uint32_t xTaskPartitionCreate(uint32_t base, uint32_t length,
 	printf("Done.\r\n");
 	printf("Mapping interrupt stack...\r\n");
   uint32_t isstack_addr = (uint32_t*)allocPage();
-	if (mapPageWrapper(isstack_addr, (uint32_t)partitionEntry, (uint32_t)0x804000 )) {
+	if (mapPageWrapper(isstack_addr, (uint32_t)partitionEntry, (uint32_t)0xA04000 )) {
 		printf("Fail to map stack for the partition\r\n");
 		goto fail;
 	}
@@ -645,7 +668,7 @@ uint32_t xTaskPartitionCreate(uint32_t base, uint32_t length,
 	pcTCB->vidt = (vidt_t*) allocPage();
 	printf("Task VIDT at %x\r\n",pcTCB->vidt);
 	pcTCB->vidt->vint[0].eip = load_addr;
-	pcTCB->vidt->vint[0].esp = 0x510000 + 0x1000 - sizeof(uint32_t);
+	pcTCB->vidt->vint[0].esp = 0xB10000 + 0x1000 - sizeof(uint32_t);
 	pcTCB->vidt->flags = 0x1;
 
 
@@ -659,7 +682,6 @@ uint32_t xTaskPartitionCreate(uint32_t base, uint32_t length,
 	pcTCB->pxTopOfStack = partitionEntry;
 
 
-
 	return pcTCB->pxTopOfStack;
 
 
@@ -670,37 +692,36 @@ uint32_t xTaskPartitionCreate(uint32_t base, uint32_t length,
 
 }
 
-#define EC_BASE 0xE0000000
-#define UART_MMIO_BSE 0x9000B000
-#define UART_PCI_BSE 0xE00A5000
-extern uint32_t UART_MMIO_Base;
-extern uint32_t UART_PCI_Base;
+static int startPartition= 0;
+
+
 void enableSerialInChild(){
 
-		printf("Mapping UART { 0x%x , 0x%x } in child 0x%x\r\n",UART_MMIO_Base,UART_PCI_Base,pxCurrentTCB->pxTopOfStack);
+		//printf("Mapping UART { 0x%x , 0x%x } in child 0x%x\r\n",UART_MMIO_Base,UART_PCI_Base,pxCurrentTCB->pxTopOfStack);
 		mapPageWrapper((uint32_t)EC_BASE,(uint32_t)pxCurrentTCB->pxTopOfStack,EC_BASE);
-		mapPageWrapper((uint32_t)UART_MMIO_Base,(uint32_t)pxCurrentTCB->pxTopOfStack,UART_MMIO_BSE);
-		mapPageWrapper((uint32_t)UART_PCI_Base,(uint32_t)pxCurrentTCB->pxTopOfStack,UART_PCI_BSE);
+		mapPageWrapper((uint32_t)UART_MMIO_BSE,(uint32_t)pxCurrentTCB->pxTopOfStack,UART_MMIO_BSE);
+		mapPageWrapper((uint32_t)UART_PCI_BSE,(uint32_t)pxCurrentTCB->pxTopOfStack,UART_PCI_BSE);
 }
 
 void disableSerialInChild(){
-	if(pxCurrentTCB->typeOfTask)
+	if(!startPartition)
 		return ;
+
 	Pip_RemoveVAddr((uint32_t)pxCurrentTCB->pxTopOfStack,EC_BASE);
 	Pip_RemoveVAddr((uint32_t)pxCurrentTCB->pxTopOfStack,UART_MMIO_BSE);
 	Pip_RemoveVAddr((uint32_t)pxCurrentTCB->pxTopOfStack,UART_PCI_BSE);
-	printf("Getting back serial %x %x from %x\r\n",UART_MMIO_Base,UART_PCI_Base,pxCurrentTCB->pxTopOfStack);
+	//printf("Getting back serial %x %x from %x\r\n",UART_MMIO_Base,UART_PCI_Base,pxCurrentTCB->pxTopOfStack);
 }
 uint32_t xTaskSwitchToProtectedTask(){
 
-	printf("Handle if the task is protected\r\n");
+	//printf("Handle if the task is protected\r\n");
 	if(!pxCurrentTCB->typeOfTask){
 		//Pip_VSTI();
 		if(pxCurrentTCB->started){
 
-			printf("Timer Switching to protected task %x\r\n",(uint32_t)pxCurrentTCB->pxTopOfStack);
+			//printf("Timer Switching to protected task %x\r\n",(uint32_t)pxCurrentTCB->pxTopOfStack);
 			if(pxCurrentTCB->vidt->flags){
-				printf("Resuming partition \r\n");
+				//printf("Resuming partition \r\n");
 				enableSerialInChild();
 				Pip_Resume((uint32_t*)pxCurrentTCB->pxTopOfStack,1);
 			}
@@ -710,6 +731,7 @@ uint32_t xTaskSwitchToProtectedTask(){
 			printf("Starting protected task %x\r\n",(uint32_t)pxCurrentTCB->pxTopOfStack);
 			pxCurrentTCB->started = 1;
 			enableSerialInChild();
+			startPartition = 1;
 			Pip_Notify((uint32_t) pxCurrentTCB->pxTopOfStack, 0, 0, 0);
 		}
 	}
@@ -2320,19 +2342,17 @@ void vTaskSwitchContext(void) {
 		//printf("Select a new task to run using either the generic C or port optimised asm code.\r\n");
 		/* Select a new task to run using either the generic C or port
 		 optimised asm code. */
-		taskSELECT_HIGHEST_PRIORITY_TASK()
-		;
-		printf("Next highest priority task is : 0x%x with type %d\r\n",
-		pxCurrentTCB->pxTopOfStack, pxCurrentTCB->typeOfTask);
+		taskSELECT_HIGHEST_PRIORITY_TASK();
+		//printf("Next highest priority task is : 0x%x with type %d\r\n",
+		//pxCurrentTCB->pxTopOfStack, pxCurrentTCB->typeOfTask);
 
 		if (!pxCurrentTCB->typeOfTask) {
-			printf("Dispatching to the next protected Task %x\r\n",pxCurrentTCB->typeOfTask);
+			//printf("Dispatching to the next protected Task %x\r\n",pxCurrentTCB->typeOfTask);
 
 			if(pxCurrentTCB->started)
 			{
-				printf("Resume Partition %x\r\n",pxCurrentTCB->pxTopOfStack);
+				//printf("Resume Partition %x\r\n",pxCurrentTCB->pxTopOfStack);
 				enableSerialInChild();
-				printf("Finished");
 				if(pxCurrentTCB->vidt->flags){
 					Pip_Resume((uint32_t*)pxCurrentTCB->pxTopOfStack,1);
 				}
@@ -2344,6 +2364,7 @@ void vTaskSwitchContext(void) {
 				printf("Starting\r\n");
 				enableSerialInChild();
 				Pip_VSTI();
+				startPartition = 1;
 				Pip_Notify((uint32_t) pxCurrentTCB->pxTopOfStack, 0, 0, 0);
 			}
 
