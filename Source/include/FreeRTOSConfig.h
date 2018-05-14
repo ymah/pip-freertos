@@ -182,7 +182,7 @@
 #define configTIMER_TASK_PRIORITY				( configMAX_PRIORITIES - 1 )
 #define configTIMER_QUEUE_LENGTH				8
 #define configTIMER_TASK_STACK_DEPTH			( configMINIMAL_STACK_SIZE * 2 )
-#define configUSE_TIME_SLICING 1
+#define configUSE_TIME_SLICING 	1
 /* Set the following definitions to 1 to include the API function, or zero
 to exclude the API function. */
 #define INCLUDE_vTaskPrioritySet				1
@@ -220,7 +220,7 @@ in assembler files. */
 	void vAssertCalled( const char * pcFile, unsigned long ulLine );
 	void vConfigureTickInterrupt( void );
 	void vClearTickInterrupt( void );
-#endif /* __ASSEMBLER__ */
+#endif /* __ASSEMBLER__ */x
 
 
 
@@ -247,5 +247,6 @@ header file. */
 #define fabs( x )			__builtin_fabs( ( x ) )
 
 
-#define MAX_PAGE 50
+#define MAX_PAGE 1000
+#define ADDR_TO_MAP 0xA000000
 #endif /* FREERTOS_CONFIG_H */
