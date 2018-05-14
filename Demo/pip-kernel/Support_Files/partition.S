@@ -33,12 +33,15 @@
 
 .section .partition1
 .incbin "Support_Files/partitions_images/part1.bin"
-
 .section .partition2
 .incbin "Support_Files/partitions_images/part2.bin"
-/*
 .section .partition3
-.incbin "images/part3.bin"
+.incbin "Support_Files/partitions_images/part3.bin"
+.section .partition4
+.incbin "Support_Files/partitions_images/part4.bin"
+.section .partition5
+.incbin "Support_Files/partitions_images/part5.bin"
+/*
 .section .partition4
 .incbin "images/part4.bin"
 .section .partition5
