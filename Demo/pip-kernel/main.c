@@ -144,11 +144,30 @@ volatile uint32_t ulCheckLoops = 0;
 
 extern void* _partition1, *_epartition1;
 extern void* _partition2, *_epartition2;
+extern void* _partition3, *_epartition3;
+extern void* _partition4, *_epartition4;
+extern void* _partition5, *_epartition5;
 
-static const struct {
-    uint32_t start, end;
-} partitions[] = { { (uint32_t) &_partition1, (uint32_t) &_epartition1 },
-    (uint32_t) &_partition2, (uint32_t) &_epartition2 };
+static const struct {uint32_t start, end;} part1 = {
+	(uint32_t)&_partition1, (uint32_t)&_epartition1,
+};
+
+
+static const struct {uint32_t start, end;} part2 = {
+	(uint32_t)&_partition2, (uint32_t)&_epartition2,
+};
+
+static const struct {uint32_t start, end;} part3 = {
+	(uint32_t)&_partition3, (uint32_t)&_epartition3,
+};
+
+static const struct {uint32_t start, end;} part4 = {
+	(uint32_t)&_partition4, (uint32_t)&_epartition4,
+};
+
+static const struct {uint32_t start, end;} part5 = {
+	(uint32_t)&_partition5, (uint32_t)&_epartition5,
+};
 
 void parse_bootinfo(pip_fpinfo* bootinfo)
 {
@@ -251,11 +270,18 @@ void task_rx(void* p)
         }
     }
 }
+
+TaskHandle_t owner;
+TaskHandle_t NWManager;
+TaskHandle_t sp1;
+TaskHandle_t sp2;
+TaskHandle_t sp3;
 void main()
 {
 
+
     pip_fpinfo * bootinfo = (pip_fpinfo*)0xFFFFC000;
-    printf("Hello From FreeRTOS\r\n");
+    printf("Hello I'm FreeRTOS\r\n");
     printf("We're going to start the Real-time \r\n");
 
     uint64_t User_Time;
@@ -282,12 +308,48 @@ void main()
     //domain 1
 
 
-    uint32_t size = partitions[0].end - partitions[0].start;
-    xTaskCreateProtected(partitions[0].start, "partition1", size, NULL, configMAX_PRIORITIES - 1, NULL);
+    uint32_t size;
+    printf("Create Owner task partition\r\n");
+    size = part1.end - part1.start;
+    xTaskCreateProtected(part1.start, "owner", size, NULL, configMAX_PRIORITIES - 1, &owner);
+
+
+		
+
+		//
+    // printf("Create SP1 task partition\r\n");
+    // size = part2.end - part2.start;
+    // xTaskCreateProtected(part2.start, "sp1 task", size, NULL, configMAX_PRIORITIES - 1, NULL);
+		//
+		//
+		//
+    // printf("Create SP2 task partition\r\n");
+    // size = part3.end - part3.start;
+    // xTaskCreateProtected(part3.start, "sp2 task", size, NULL, configMAX_PRIORITIES - 1, &sp2);
+		//
+		//
+		// printf("Mapping hardware in task-partition %x\r\n",sp2);
+		//
+		//
+    // printf("Create SP3 task partition\r\n");
+    // size = part4.end - part4.start;
+    // xTaskCreateProtected(part4.start, "sp3 task", size, NULL, configMAX_PRIORITIES - 1, NULL);
+		//
+		//
+		//
+    // printf("Create Network Manager partition\r\n");
+    // size = part5.end - part5.start;
+    // xTaskCreateProtected(part5.start, "Network Manager", size, NULL, configMAX_PRIORITIES - 1, NULL);
+
+
+
+
+
+
+
 
     //domain 2
-    size = partitions[1].end - partitions[1].start;
-    //xTaskCreateProtected(partitions[1].start, "partition2", size, NULL, configMAX_PRIORITIES - 1, NULL);
+
 
 
     //xTaskCreate(vTaskCode,"Test task",2*configMINIMAL_STACK_SIZE,NULL,configMAX_PRIORITIES-1,NULL);
