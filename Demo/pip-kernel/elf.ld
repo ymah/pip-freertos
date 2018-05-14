@@ -22,25 +22,46 @@ SECTIONS
 }	/* Read-write data (initialised) */
 
 
-    .partition1 : ALIGN(4096)
-    {
-        _partition1 = . ;
-        *(.partition1)
-        . = ALIGN(0x1001);
-        _epartition1 = . ;
-    }
-
-    .partition2 : ALIGN(4096)
-    {
-        _partition2 = . ;
-        *(.partition1)
-        . = ALIGN(0x1001);
-        _epartition2 = . ;
-    }
 
 
 
+.partition1 : ALIGN(4096)
+{
+    _partition1 = . ;
+    *(.partition1)
+    . = ALIGN(0x40000);
+    _epartition1 = . ;
+}
 
+.partition2 : ALIGN(4096)
+{
+    _partition2 = . ;
+    *(.partition2)
+    . = ALIGN(0x40000);
+    _epartition2 = . ;
+}
+.partition3 : ALIGN(4096)
+{
+    _partition3 = . ;
+    *(.partition3)
+    . = ALIGN(0x40000);
+    _epartition3 = . ;
+}
+.partition4 : ALIGN(4096)
+{
+    _partition4 = . ;
+    *(.partition4)
+    . = ALIGN(0x40000);
+    _epartition4 = . ;
+}
+
+.partition5 : ALIGN(4096)
+{
+    _partition5 = . ;
+    *(.partition5)
+    . = ALIGN(0x40000);
+    _epartition5 = . ;
+}
     .data :
 	{
  		__data_start = ABSOLUTE(.);
