@@ -39,6 +39,7 @@ RTOS_MEMOBJ=$(RTOS_MEMSRC:.c=.o)
 # IA32 RTOS directories
 IA32DIR=$(shell pwd)
 SUPPORT_DIR=$(IA32DIR)/Support_Files
+INCODSI_DIR=$(IA32DIR)/includeODSI
 BLINKY_DIR=$(IA32DIR)/Blinky_Demo
 FULL_DIR=$(IA32DIR)/Full_Demo
 FULL_DIR_TASK=$(ROOTDIR)/Demo/Common/Minimal/
@@ -67,6 +68,7 @@ SKIPOBJ=$(FULL_DIR_TASK)/sp_flop.o $(FULL_DIR_TASK)/comtest.o $(FULL_DIR_TASK)/c
 # Include arguments for gcc
 CFLAGS=-I$(FULL_DIR)
 CFLAGS+=-I$(SUPPORT_DIR)
+CFLAGS+=-I$(INCODSI_DIR)
 CFLAGS+=-I$(BLINKY_DIR)
 CFLAGS+=-I$(RTOS_SRCDIR)/include
 CFLAGS+=-I$(ROOTDIR)/Demo/Common/include

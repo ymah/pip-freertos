@@ -314,32 +314,32 @@ void main()
     xTaskCreateProtected(part1.start, "owner", size, NULL, configMAX_PRIORITIES - 1, &owner);
 
 
-		
 
-		//
-    // printf("Create SP1 task partition\r\n");
-    // size = part2.end - part2.start;
-    // xTaskCreateProtected(part2.start, "sp1 task", size, NULL, configMAX_PRIORITIES - 1, NULL);
-		//
-		//
-		//
-    // printf("Create SP2 task partition\r\n");
-    // size = part3.end - part3.start;
-    // xTaskCreateProtected(part3.start, "sp2 task", size, NULL, configMAX_PRIORITIES - 1, &sp2);
-		//
-		//
-		// printf("Mapping hardware in task-partition %x\r\n",sp2);
-		//
-		//
-    // printf("Create SP3 task partition\r\n");
-    // size = part4.end - part4.start;
-    // xTaskCreateProtected(part4.start, "sp3 task", size, NULL, configMAX_PRIORITIES - 1, NULL);
-		//
-		//
-		//
-    // printf("Create Network Manager partition\r\n");
-    // size = part5.end - part5.start;
-    // xTaskCreateProtected(part5.start, "Network Manager", size, NULL, configMAX_PRIORITIES - 1, NULL);
+
+
+    printf("Create SP1 task partition\r\n");
+    size = part2.end - part2.start;
+    xTaskCreateProtected(part2.start, "sp1 task", size, NULL, configMAX_PRIORITIES - 1, NULL);
+
+
+
+    printf("Create SP2 task partition\r\n");
+    size = part3.end - part3.start;
+    xTaskCreateProtected(part3.start, "sp2 task", size, NULL, configMAX_PRIORITIES - 1, &sp2);
+
+
+		printf("Mapping hardware in task-partition %x\r\n",sp2);
+
+
+    printf("Create SP3 task partition\r\n");
+    size = part4.end - part4.start;
+    xTaskCreateProtected(part4.start, "sp3 task", size, NULL, configMAX_PRIORITIES - 1, NULL);
+
+
+
+    printf("Create Network Manager partition\r\n");
+    size = part5.end - part5.start;
+    xTaskCreateProtected(part5.start, "Network Manager", size, NULL, configMAX_PRIORITIES - 1, NULL);
 
 
 
