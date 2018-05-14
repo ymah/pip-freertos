@@ -109,6 +109,7 @@
 vPortYieldCall:
 	/* Save general purpose registers. */
 	pusha
+	call disableSerialInChild
 	.if configSUPPORT_FPU == 1
 
 		/* If the task has a buffer allocated to save the FPU context then save
