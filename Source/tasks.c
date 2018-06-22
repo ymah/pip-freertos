@@ -667,6 +667,7 @@ uint32_t xTaskPartitionCreate(uint32_t base, uint32_t length,
 	printf("Done.\r\n");
 	pcTCB->vidt = (vidt_t*) allocPage();
 	printf("Task VIDT at %x\r\n",pcTCB->vidt);
+
 	pcTCB->vidt->vint[0].eip = load_addr;
 	pcTCB->vidt->vint[0].esp = 0xB10000 + 0x1000 - sizeof(uint32_t);
 	pcTCB->vidt->flags = 0x1;
@@ -772,8 +773,7 @@ BaseType_t xTaskGenericCreate(TaskFunction_t pxTaskCode,
 	if (type)
 		pxNewTCB = prvAllocateTCBAndStack(usStackDepth, puxStackBuffer);
 	else
-		pxNewTCB = prvAllocateTCBAndStack(configMINIMAL_STACK_SIZE,
-				puxStackBuffer);
+		pxNewTCB = prvAllocateTCBAndStack(configMINIMAL_STACK_SIZE,puxStackBuffer);
 
 	if (pxNewTCB != NULL) {
 
@@ -865,14 +865,11 @@ BaseType_t xTaskGenericCreate(TaskFunction_t pxTaskCode,
 				pxNewTCB->pxTopOfStack = xTaskPartitionCreate(pxTaskCode,
 						usStackDepth, PARTITION_ADDR, pxNewTCB);
 
-
-						if(!initPartitionList){
-							partitionList = (uint32_t*)pvPortMalloc(numberOfPartitions*sizeof(uint32_t));
-							initPartitionList = 1;
+						if(pvParameters != NULL){
+							printf("Mapping paramters %x at 0xFFFFA000\r\n",pvParameters );
+							if(!mapPageWrapper((uint32_t)pvParameters,pxNewTCB->pxTopOfStack,(uint32_t)0xFFFFA000))
+								printf("Error in mapping parameters\r\n");
 						}
-						partitionList[currentIndex++] = pxNewTCB->pxTopOfStack;
-
-
 					}
 
 			printf("%s : {%d , 0x%x, %d}\r\n", pcName, type,
@@ -3201,15 +3198,14 @@ static TCB_t *prvAllocateTCBAndStack(const uint16_t usStackDepth,
 		StackType_t *pxStack;
 
 		/* Allocate space for the stack used by the task being created. */
-		pxStack = (StackType_t *) pvPortMallocAligned(
-				(((size_t ) usStackDepth) * sizeof(StackType_t)),
-				puxStackBuffer); /*lint !e961 MISRA exception as the casts are only redundant for some ports. */
+		printf("Ressources are %x and %x\r\n",((size_t ) usStackDepth) * sizeof(StackType_t),puxStackBuffer);
+		pxStack = (StackType_t *) pvPortMallocAligned((((size_t ) usStackDepth) * sizeof(StackType_t)),puxStackBuffer); /*lint !e961 MISRA exception as the casts are only redundant for some ports. */
 		printf("Stack allocated\r\n");
 		if (pxStack != NULL) {
 			/* Allocate space for the TCB.  Where the memory comes from depends
 			 on the implementation of the port malloc function. */
 			pxNewTCB = (TCB_t *) pvPortMalloc(sizeof(TCB_t));
-
+			printf("/!\\ pxNewTCB %x\r\n",pxNewTCB);
 			if (pxNewTCB != NULL) {
 				/* Store the stack location in the TCB. */
 				pxNewTCB->pxStack = pxStack;
@@ -3217,11 +3213,12 @@ static TCB_t *prvAllocateTCBAndStack(const uint16_t usStackDepth,
 				/* The stack cannot be used as the TCB was not created.  Free it
 				 again. */
 				vPortFree(pxStack);
+				printf("Error during allocating ressoruces for task\r\n");
 			}
 		} else {
 			pxNewTCB = NULL;
+			printf("Error during allocating ressoruces for task\r\n");
 		}
-		printf("Task structure created\r\n");
 	}
 #endif /* portSTACK_GROWTH */
 
@@ -3235,7 +3232,7 @@ static TCB_t *prvAllocateTCBAndStack(const uint16_t usStackDepth,
 		}
 #endif /* ( ( configCHECK_FOR_STACK_OVERFLOW > 1 ) || ( ( configUSE_TRACE_FACILITY == 1 ) || ( INCLUDE_uxTaskGetStackHighWaterMark == 1 ) ) ) */
 	}
-
+	printf("Finished\r\n");
 	return pxNewTCB;
 }
 /*-----------------------------------------------------------*/
