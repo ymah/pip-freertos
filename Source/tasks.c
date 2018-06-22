@@ -867,7 +867,7 @@ BaseType_t xTaskGenericCreate(TaskFunction_t pxTaskCode,
 
 						if(pvParameters != NULL){
 							printf("Mapping paramters %x at 0xFFFFA000\r\n",pvParameters );
-							if(!mapPageWrapper((uint32_t)pvParameters,pxNewTCB->pxTopOfStack,(uint32_t)0xFFFFA000))
+							if(mapPageWrapper((uint32_t)pvParameters,pxNewTCB->pxTopOfStack,(uint32_t)0xFFFFA000))
 								printf("Error in mapping parameters\r\n");
 						}
 					}
