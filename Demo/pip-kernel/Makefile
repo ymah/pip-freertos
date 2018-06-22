@@ -89,7 +89,7 @@ ASFLAGS+=-I../../Source/include
 ASFLAGS+= -m32 -Wa,--gdwarf2 -Wa,-march=pentium -c
 
 
-LIBGCC=/usr/lib/gcc/x86_64-pc-linux-gnu/7.3.1/32/
+LIBGCC=$(shell dirname $(shell gcc -print-libgcc-file-name -m32))
 # Linker flags
 LDFLAGS=-T$(LINKER) -Map=$(BUILD_DIR)/$(MAPFILE) --gc-sections -L$(LIBGCC) -L$(LIBPIP_LIB) -L$(LIBGCC) -melf_i386
 LDFLAGS2=-Telf.ld -Map=$(BUILD_DIR)/$(MAPFILE) --gc-sections -L$(LIBGCC) -L$(LIBPIP_LIB) -L$(LIBGCC) -melf_i386
