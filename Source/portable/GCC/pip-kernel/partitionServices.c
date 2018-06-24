@@ -59,6 +59,18 @@ struct AMessage
     char ucData[ 20 ];
  } xMessage;
 
+
+ void* my_memcpy(void* destination, void* source, size_t num)
+ {
+ 	int i;
+ 	char* d = destination;
+ 	char* s = source;
+ 	for (i = 0; i < num; i++) {
+ 		d[i] = s[i];
+ 	}
+ 	return destination;
+ }
+
 void queueSendService(uint32_t data2){
 
   printf("Starting QueueSend services by %x\r\n",partitionCaller);
@@ -76,11 +88,16 @@ void queueSendService(uint32_t data2){
   QueueHandle_t queueToSend = (QueueHandle_t)queue; //(QueueHandle_t*) Pip_RemoveVAddr(partitionCaller,queue);
   uint32_t * dataToSend = (uint32_t *) Pip_RemoveVAddr(partitionCaller,itemToQueue);
 
+  uint32_t * interBuffer = (uint32_t*)allocPage();
+  my_memcpy(interBuffer, dataToSend, 0x1000);
+
+  
+  Pip_MapPageWrapper(dataToSend,partitionCaller,itemToQueue);
   //printf("Data to send %x\r\n",dataToSend);
   //int i;
   //for(i=0;i<20;i++)
     //printf("%d\n",dataToSend->ucData[i] );
-  xQueueSend(queueToSend,(void*)dataToSend,tickToWait);
+  xQueueSend(queueToSend,(void*)interBuffer,tickToWait);
 
   printf("Message waiting %d\r\n",uxQueueMessagesWaiting(queueToSend));
   if(Pip_MapPageWrapper(dataCall,partitionCaller,data2)){
