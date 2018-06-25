@@ -91,7 +91,7 @@ void queueSendService(uint32_t data2){
   uint32_t * interBuffer = (uint32_t*)allocPage();
   my_memcpy(interBuffer, dataToSend, 0x1000);
 
-  
+
   Pip_MapPageWrapper(dataToSend,partitionCaller,itemToQueue);
   //printf("Data to send %x\r\n",dataToSend);
   //int i;

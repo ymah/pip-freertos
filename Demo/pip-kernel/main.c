@@ -290,14 +290,14 @@ void main()
 		uint32_t queueSP2 = allocPage();
 		*(uint32_t*)(queueSP2+0x4) = xQueue_2NW;
 		*(uint32_t*)(queueSP2+0x8) = xQueue_2OD_IC;
-		*(uint32_t*)(queueSP2+0x10) = xQueue_2SP2D_IC;
+		*(uint32_t*)(queueSP2+0xC) = xQueue_2SP2D_IC;
 
 		printf("Mapped into SP1\r\n");
 		// map queues to sp3 domain
 		uint32_t queueSP3 = allocPage();
 		*(uint32_t*)(queueSP3+0x4) = xQueue_2NW;
 		*(uint32_t*)(queueSP3+0x8) = xQueue_2OD_IC;
-		*(uint32_t*)(queueSP3+0x10) = xQueue_2SP3D_IC;
+		*(uint32_t*)(queueSP3+0xC) = xQueue_2SP3D_IC;
 
 
 
@@ -310,7 +310,7 @@ void main()
 
 
 		size = part2.end - part2.start;
-		xTaskCreateProtected(part2.start, "sp1 task", size, queueSP1, configMAX_PRIORITIES - 3, &sp1);
+		xTaskCreateProtected(part2.start, "sp1 task", size, queueSP1, configMAX_PRIORITIES - 2, &sp1);
 		printf("Create SP1 task partition 0x%x\r\n",sp1);
 
 
@@ -321,11 +321,11 @@ void main()
 
 
 		size = part4.end - part4.start;
-		xTaskCreateProtected(part4.start, "sp3 task", size, queueSP3, configMAX_PRIORITIES - 3, &sp3);
+		xTaskCreateProtected(part4.start, "sp3 task", size, queueSP3, configMAX_PRIORITIES - 4, &sp3);
 		printf("Create SP3 task partition 0x%x\r\n",sp3);
 
 		size = part5.end - part5.start;
-		xTaskCreateProtected(part5.start, "Network Manager", size, queueNwMgr, configMAX_PRIORITIES - 2, &NWManager);
+		xTaskCreateProtected(part5.start, "Network Manager", size, queueNwMgr, configMAX_PRIORITIES - 5, &NWManager);
 
 
 
