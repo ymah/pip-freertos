@@ -223,6 +223,10 @@ void main()
 	uint32_t paging = initPaging((void*)bootinfo->membegin,(void*)bootinfo->memend);
 	//Creating protected domains
 
+
+
+
+
 	//domain 1
 
 	uint32_t size;
@@ -349,8 +353,13 @@ void main()
 		// map UART0
 		//mapPageWrapper((uint32_t) &xQueue_2SP3D_IC,(uint32_t) &sp3, 0xB000000);
 
-		mapPageWrapper((uint32_t) 0xE00A5000,(uint32_t) owner, 0xE00A5000);
-		mapPageWrapper((uint32_t) 0x9000B000,(uint32_t) owner, 0x9000B000);
+		mapPageWrapper((uint32_t) 0xE00A1000,*(uint32_t*)NWManager, 0xE00A1000);
+		mapPageWrapper((uint32_t) 0x9000F000,*(uint32_t*) NWManager, 0x9000F000);
+		mapPageWrapper((uint32_t) 0x9000E000,*(uint32_t*) NWManager, 0x9000E000);
+		mapPageWrapper((uint32_t) 0xE00AA000,*(uint32_t*) NWManager, 0xE00AA000);
+		mapPageWrapper((uint32_t) 0x90006000,*(uint32_t*) NWManager, 0x90006000);
+		mapPageWrapper((uint32_t) 0x90007000,*(uint32_t*) NWManager, 0x90007000);
+
 		// Blink output leds
 		//test_Galileo_Gen2_Blink_IOs();
 
