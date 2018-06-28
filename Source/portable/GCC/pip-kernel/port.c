@@ -491,7 +491,7 @@ END_OF_INTERRUPT
 
 
 INTERRUPT_HANDLER(anyIntAsm,anyIntHandler)
-	printf("Got 0-12 interrupt\r\n");
+	printf("Got 0-12 interrupt %x %x %x\r\n",data1,data2,caller);
 	for(;;);
 END_OF_INTERRUPT
 
@@ -512,7 +512,7 @@ static void prvSetupTimerInterrupt(void) {
 	int i;
 	for(i=1;i<13;i++)
 			registerInterrupt(i, &anyIntHandler, (uint32_t*) allocPage()+0x1000);
-	
+
 	registerInterrupt(33, &vPortTimerHandler, (uint32_t*) allocPage()+0x1000);
 	registerInterrupt(40, &vPortTimerHandler, (uint32_t*) allocPage()+0x1000);
 	registerInterrupt(34, &keyHandler, (uint32_t*) allocPage()+0x1000);
