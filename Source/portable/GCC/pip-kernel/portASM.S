@@ -298,6 +298,7 @@ vPortAPICSpuriousHandler:
 	INTERRUPT_HANDLER(irqTimer,vPortTimerHandler)
 	INTERRUPT_HANDLER(pfAsm,pfHandler)
 	INTERRUPT_HANDLER(keyAsm,keyHandler)
+	INTERRUPT_HANDLER(anyIntAsm,anyIntHandler)
 	INTERRUPT_HANDLER(serviceRoutineAsm,serviceRoutine)
 	INTERRUPT_HANDLER(validChildAsm,validChild)
 .end

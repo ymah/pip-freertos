@@ -489,6 +489,12 @@ INTERRUPT_HANDLER(keyAsm,keyHandler)
 	__asm__ volatile("call vPortTimerHandler");
 END_OF_INTERRUPT
 
+
+INTERRUPT_HANDLER(anyIntAsm,anyIntHandler)
+	printf("Got 0-12 interrupt\r\n");
+	for(;;);
+END_OF_INTERRUPT
+
 void printInfo(){
     int i;
     for(i=0;i<0x10;i++)
@@ -503,6 +509,10 @@ static void prvSetupTimerInterrupt(void) {
 
 	printf("Init interrupts handlers\r\n");
 	//registerInterrupt(0, &resetAsm, (uint32_t*) 0x0);
+	int i;
+	for(i=1;i<13;i++)
+			registerInterrupt(i, &anyIntHandler, (uint32_t*) allocPage()+0x1000);
+	
 	registerInterrupt(33, &vPortTimerHandler, (uint32_t*) allocPage()+0x1000);
 	registerInterrupt(40, &vPortTimerHandler, (uint32_t*) allocPage()+0x1000);
 	registerInterrupt(34, &keyHandler, (uint32_t*) allocPage()+0x1000);
