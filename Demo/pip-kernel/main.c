@@ -189,7 +189,7 @@ void parse_bootinfo(pip_fpinfo* bootinfo)
 	}
 
 
-	printf("\tAvailable memory starts at 0x%x and ends at 0x%x\r\n",(uint32_t)bootinfo->membegin,      (uint32_t)bootinfo->memend);
+	printf("\tAvailable memory starts at 0x%x and ends at 0x%x\r\n",(uint32_t)bootinfo->membegin,(uint32_t)bootinfo->memend);
 
 
 	printf("\tPip revision %s\r\n",bootinfo->revision);
@@ -197,7 +197,7 @@ void parse_bootinfo(pip_fpinfo* bootinfo)
 }
 
 
-
+uint32_t dmaBuffers;
 
 TaskHandle_t owner;
 TaskHandle_t NWManager;
@@ -210,16 +210,17 @@ void main()
 	/* Init the UART, GPIO, etc. */
 
 	printf("Hardware set up \r\n");
-	pip_fpinfo * bootinfo = (pip_fpinfo*)0xFFFFC000;
+
 	printf("Hello I'm FreeRTOS\r\n");
 	printf("We're going to start the Real-time \r\n");
-
+	pip_fpinfo * bootinfo = (pip_fpinfo*)0xFFFFC000;
 	//Get Bootinfo for the available memory
 	parse_bootinfo(bootinfo);
 
 
 	//Initialize the avaible pages
-
+	dmaBuffers = bootinfo->memend - 16*0x1000;
+	bootinfo->memend = dmaBuffers - 0x1000;
 	uint32_t paging = initPaging((void*)bootinfo->membegin,(void*)bootinfo->memend);
 	//Creating protected domains
 
@@ -278,7 +279,7 @@ void main()
 		*(uint32_t*)(queueNwMgr+0xC) = xQueue_2SP1D_IC;
 		*(uint32_t*)(queueNwMgr+0x10) = xQueue_2SP2D_IC;
 		*(uint32_t*)(queueNwMgr+0x14) = xQueue_2SP3D_IC;
-
+		*(uint32_t*)(queueNwMgr+0x18) = dmaBuffers;
 		printf("Mapped into NW mngr\r\n");
 		// map queues to sp1 domain
 		uint32_t queueSP1 = allocPage();
@@ -329,6 +330,7 @@ void main()
 		printf("Create SP3 task partition 0x%x\r\n",sp3);
 
 		size = part5.end - part5.start;
+
 		xTaskCreateProtected(part5.start, "Network Manager", size, queueNwMgr, configMAX_PRIORITIES - 5, &NWManager);
 
 
@@ -353,12 +355,20 @@ void main()
 		// map UART0
 		//mapPageWrapper((uint32_t) &xQueue_2SP3D_IC,(uint32_t) &sp3, 0xB000000);
 
-		mapPageWrapper((uint32_t) 0xE00A1000,*(uint32_t*)NWManager, 0xE00A1000);
+		mapPageWrapper((uint32_t) 0xE00A1000,*(uint32_t*) NWManager, 0xE00A1000);
 		mapPageWrapper((uint32_t) 0x9000F000,*(uint32_t*) NWManager, 0x9000F000);
 		mapPageWrapper((uint32_t) 0x9000E000,*(uint32_t*) NWManager, 0x9000E000);
 		mapPageWrapper((uint32_t) 0xE00AA000,*(uint32_t*) NWManager, 0xE00AA000);
 		mapPageWrapper((uint32_t) 0x90006000,*(uint32_t*) NWManager, 0x90006000);
 		mapPageWrapper((uint32_t) 0x90007000,*(uint32_t*) NWManager, 0x90007000);
+
+
+		if(mapPageWrapper((uint32_t) dmaBuffers,*(uint32_t*) NWManager, dmaBuffers))
+		{	printf("Failted to map dmaBuffers");
+			for(;;);
+		}
+
+
 
 		// Blink output leds
 		//test_Galileo_Gen2_Blink_IOs();
