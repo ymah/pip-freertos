@@ -201,7 +201,7 @@ void parse_bootinfo(pip_fpinfo* bootinfo)
 	}
 
 
-	printf("\tAvailable memory starts at 0x%x and ends at 0x%x\r\n",(uint32_t)bootinfo->membegin,      (uint32_t)bootinfo->memend);
+	printf("\tAvailable memory starts at 0x%x and ends at 0x%x\r\n",(uint32_t)bootinfo->membegin,(uint32_t)bootinfo->memend);
 
 
 	printf("\tPip revision %s\r\n",bootinfo->revision);
@@ -209,7 +209,7 @@ void parse_bootinfo(pip_fpinfo* bootinfo)
 }
 
 
-
+uint32_t dmaBuffers;
 
 TaskHandle_t owner;
 TaskHandle_t NWManager;
@@ -222,16 +222,17 @@ void main()
 	/* Init the UART, GPIO, etc. */
 
 	printf("Hardware set up \r\n");
-	pip_fpinfo * bootinfo = (pip_fpinfo*)0xFFFFC000;
+
 	printf("Hello I'm FreeRTOS\r\n");
 	printf("We're going to start the Real-time \r\n");
-
+	pip_fpinfo * bootinfo = (pip_fpinfo*)0xFFFFC000;
 	//Get Bootinfo for the available memory
 	parse_bootinfo(bootinfo);
 
 
 	//Initialize the avaible pages
-
+	dmaBuffers = bootinfo->memend - 16*0x1000;
+	bootinfo->memend = dmaBuffers - 0x1000;
 	uint32_t paging = initPaging((void*)bootinfo->membegin,(void*)bootinfo->memend);
 	//Creating protected domains
 
@@ -272,6 +273,7 @@ void main()
 		printf("Queue created\r\n");
 	}
 
+<<<<<<< HEAD
 	prvSetupHardware();
 
 	// map queues to owner domain
@@ -281,6 +283,22 @@ void main()
 	*(uint32_t*)(queueOwner+0xC) = xQueue_2SP1D_IC;
 	*(uint32_t*)(queueOwner+0x10) = xQueue_2SP2D_IC;
 	*(uint32_t*)(queueOwner+0x14) = xQueue_2SP3D_IC;
+=======
+		// map queues to network manager domain
+		uint32_t queueNwMgr = allocPage();
+		*(uint32_t*)(queueNwMgr+0x4) = xQueue_2NW;
+		*(uint32_t*)(queueNwMgr+0x8) = xQueue_2OD_IC;
+		*(uint32_t*)(queueNwMgr+0xC) = xQueue_2SP1D_IC;
+		*(uint32_t*)(queueNwMgr+0x10) = xQueue_2SP2D_IC;
+		*(uint32_t*)(queueNwMgr+0x14) = xQueue_2SP3D_IC;
+		*(uint32_t*)(queueNwMgr+0x18) = dmaBuffers;
+		printf("Mapped into NW mngr\r\n");
+		// map queues to sp1 domain
+		uint32_t queueSP1 = allocPage();
+		*(uint32_t*)(queueSP1+0x4) = xQueue_2NW;
+		*(uint32_t*)(queueSP1+0x8) = xQueue_2OD_IC;
+		*(uint32_t*)(queueSP1+0xC) = xQueue_2SP1D_IC;
+>>>>>>> c544f49684172dd094dcac8339f5497aab54fafe
 
 
 	printf("Mapped into Owner\r\n");
@@ -337,9 +355,15 @@ void main()
 	printf("Create SP2 task partition 0x%x\r\n",sp2);
 
 
+<<<<<<< HEAD
 	size = part4.end - part4.start;
 	xTaskCreateProtected(part4.start, "sp3 task", size, queueSP3, configMAX_PRIORITIES - 4, &sp3);
 	printf("Create SP3 task partition 0x%x\r\n",sp3);
+=======
+		size = part5.end - part5.start;
+
+		xTaskCreateProtected(part5.start, "Network Manager", size, queueNwMgr, configMAX_PRIORITIES - 5, &NWManager);
+>>>>>>> c544f49684172dd094dcac8339f5497aab54fafe
 
 	size = part5.end - part5.start;
 	xTaskCreateProtected(part5.start, "Network Manager", size, queueNwMgr, configMAX_PRIORITIES - 5, &NWManager);
@@ -360,6 +384,7 @@ void main()
 	// uint32_t GPIO_CTRL_MMIO_BASE     = 0x90006000;
 	// uint32_t I2C_CTRL_MMIO_BASE      = 0x90007000;
 
+<<<<<<< HEAD
 	/*
 	*  map hardware peripherals
 	*/
@@ -373,6 +398,25 @@ void main()
 	mapPageWrapper((uint32_t) 0x90006000,*(uint32_t*) NWManager, 0x90006000);
 	mapPageWrapper((uint32_t) 0x90007000,*(uint32_t*) NWManager, 0x90007000);
 	mapPageWrapper((uint32_t) get_dma_buffer(),*(uint32_t*) NWManager, get_dma_buffer());
+=======
+		mapPageWrapper((uint32_t) 0xE00A1000,*(uint32_t*) NWManager, 0xE00A1000);
+		mapPageWrapper((uint32_t) 0x9000F000,*(uint32_t*) NWManager, 0x9000F000);
+		mapPageWrapper((uint32_t) 0x9000E000,*(uint32_t*) NWManager, 0x9000E000);
+		mapPageWrapper((uint32_t) 0xE00AA000,*(uint32_t*) NWManager, 0xE00AA000);
+		mapPageWrapper((uint32_t) 0x90006000,*(uint32_t*) NWManager, 0x90006000);
+		mapPageWrapper((uint32_t) 0x90007000,*(uint32_t*) NWManager, 0x90007000);
+
+
+		if(mapPageWrapper((uint32_t) dmaBuffers,*(uint32_t*) NWManager, dmaBuffers))
+		{	printf("Failted to map dmaBuffers");
+			for(;;);
+		}
+
+
+
+		// Blink output leds
+		//test_Galileo_Gen2_Blink_IOs();
+>>>>>>> c544f49684172dd094dcac8339f5497aab54fafe
 
 	// Blink output leds
 	//test_Galileo_Gen2_Blink_IOs();
