@@ -148,6 +148,11 @@ uint32_t get_dma_buffer()
 	return dma_buffer;
 }
 
+void set_dma_buffer(uint32_t dma_buffer_addr)
+{
+	dma_buffer = dma_buffer_addr;
+}
+
 static void vInitializeGalileoUART_RCVR_DMA(uint32_t portnumber)
  {
 	uint32_t bar1;
@@ -155,7 +160,6 @@ static void vInitializeGalileoUART_RCVR_DMA(uint32_t portnumber)
 	uint32_t UART_1_PCI_Base = 0UL;
 	volatile uint32_t input_data = 0;
 
-	dma_buffer = (uint8_t *)allocPage();
 	printf("[UART_DMA.c] dma_buffer : %x\r\n", (uint32_t)dma_buffer);
 
 	if (portnumber == DEBUG_SERIAL_PORT)

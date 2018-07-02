@@ -209,7 +209,7 @@ void parse_bootinfo(pip_fpinfo* bootinfo)
 }
 
 
-
+uint32_t dmaBuffer;
 
 TaskHandle_t owner;
 TaskHandle_t NWManager;
@@ -231,13 +231,11 @@ void main()
 
 
 	//Initialize the avaible pages
+	dmaBuffer = bootinfo->memend - 16*0x1000;
+	bootinfo->memend = dmaBuffer - 0x1000;
 
 	uint32_t paging = initPaging((void*)bootinfo->membegin,(void*)bootinfo->memend);
 	//Creating protected domains
-
-
-
-
 
 	//domain 1
 
@@ -272,6 +270,9 @@ void main()
 		printf("Queue created\r\n");
 	}
 
+	// MUST set the dma_buffer before hardware setup
+	// TODO add protection to ensure dma_buffer setup before hardware initialization
+	set_dma_buffer(dmaBuffer);
 	prvSetupHardware();
 
 	// map queues to owner domain
@@ -292,8 +293,8 @@ void main()
 	*(uint32_t*)(queueNwMgr+0xC) = xQueue_2SP1D_IC;
 	*(uint32_t*)(queueNwMgr+0x10) = xQueue_2SP2D_IC;
 	*(uint32_t*)(queueNwMgr+0x14) = xQueue_2SP3D_IC;
-	*(uint32_t*)(queueNwMgr+0x18) = get_dma_buffer();
-	printf("Dma Buffer\t\t\t\t\t%x\r\n", get_dma_buffer());
+	*(uint32_t*)(queueNwMgr+0x18) = dmaBuffer;
+	printf("Dma Buffer\t\t\t\t\t%x\r\n", dmaBuffer);
 
 	printf("Mapped into NW mngr\r\n");
 	// map queues to sp1 domain
@@ -375,7 +376,10 @@ void main()
 	mapPageWrapper((uint32_t) 0x90006000,*(uint32_t*) NWManager, 0x90006000);
 	mapPageWrapper((uint32_t) 0x90007000,*(uint32_t*) NWManager, 0x90007000);
 
-	mapPageWrapper((uint32_t) get_dma_buffer(),*(uint32_t*) NWManager, get_dma_buffer());
+	if(mapPageWrapper((uint32_t) dmaBuffer,*(uint32_t*) NWManager, dmaBuffer))
+	{	printf("Failted to map dmaBuffers");
+		for(;;);
+	}
 
 	// Blink output leds
 	//test_Galileo_Gen2_Blink_IOs();
