@@ -231,9 +231,6 @@ void main()
 
 
 	//Initialize the avaible pages
-	dmaBuffer = bootinfo->memend - 16*0x1000;
-	bootinfo->memend = dmaBuffer - 0x1000;
-
 	uint32_t paging = initPaging((void*)bootinfo->membegin,(void*)bootinfo->memend);
 	//Creating protected domains
 
@@ -241,7 +238,7 @@ void main()
 
 	uint32_t size;
 
-
+	dmaBuffer = allocPage();
 
 	printf("Create Network Manager partition 0x%x\r\n",NWManager);
 

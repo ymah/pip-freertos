@@ -181,8 +181,9 @@ vPortStartFirstTask:
 	.endif /* configSUPPORT_FPU */
 
 	//enableInterrupt
-  call Pip_VSTI
-  popa
+	pusha
+  	call Pip_VSTI
+  	popa
 	iret
 	/* Restore general purpose registers. */
 .endfunc
