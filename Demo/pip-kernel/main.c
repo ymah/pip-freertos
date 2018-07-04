@@ -208,8 +208,9 @@ void parse_bootinfo(pip_fpinfo* bootinfo)
 	return;
 }
 
-
-uint32_t dmaBuffer;
+uint32_t phy_dmaBuffer;
+uint32_t vDmaBuffer;
+uint32_t NW_vDmaBuffer;
 
 TaskHandle_t owner;
 TaskHandle_t NWManager;
@@ -229,7 +230,6 @@ void main()
 	//Get Bootinfo for the available memory
 	parse_bootinfo(bootinfo);
 
-
 	//Initialize the avaible pages
 	uint32_t paging = initPaging((void*)bootinfo->membegin,(void*)bootinfo->memend);
 	//Creating protected domains
@@ -238,7 +238,11 @@ void main()
 
 	uint32_t size;
 
-	dmaBuffer = allocPage();
+	vDmaBuffer = allocPage();
+	phy_dmaBuffer = 0xE2D7000 - ( vDmaBuffer - bootinfo->membegin );
+	NW_vDmaBuffer = 0xFFFEC000;
+
+
 
 	printf("Create Network Manager partition 0x%x\r\n",NWManager);
 
@@ -269,7 +273,7 @@ void main()
 
 	// MUST set the dma_buffer before hardware setup
 	// TODO add protection to ensure dma_buffer setup before hardware initialization
-	set_dma_buffer(dmaBuffer);
+	set_dma_buffer(phy_dmaBuffer);
 	prvSetupHardware();
 
 	// map queues to owner domain
@@ -290,8 +294,10 @@ void main()
 	*(uint32_t*)(queueNwMgr+0xC) = xQueue_2SP1D_IC;
 	*(uint32_t*)(queueNwMgr+0x10) = xQueue_2SP2D_IC;
 	*(uint32_t*)(queueNwMgr+0x14) = xQueue_2SP3D_IC;
-	*(uint32_t*)(queueNwMgr+0x18) = dmaBuffer;
-	printf("Dma Buffer\t\t\t\t\t%x\r\n", dmaBuffer);
+	*(uint32_t*)(queueNwMgr+0x18) = phy_dmaBuffer;
+	*(uint32_t*)(queueNwMgr+0x1C) = NW_vDmaBuffer;
+	printf("Dma Buffer\t\t\t\t\t%x\r\n", vDmaBuffer);
+	printf("v Dma Buffer\t\t\t\t\t%x\r\n", NW_vDmaBuffer);
 
 	printf("Mapped into NW mngr\r\n");
 	// map queues to sp1 domain
@@ -373,7 +379,7 @@ void main()
 	mapPageWrapper((uint32_t) 0x90006000,*(uint32_t*) NWManager, 0x90006000);
 	mapPageWrapper((uint32_t) 0x90007000,*(uint32_t*) NWManager, 0x90007000);
 
-	if(mapPageWrapper((uint32_t) dmaBuffer,*(uint32_t*) NWManager, dmaBuffer))
+	if(mapPageWrapper((uint32_t) vDmaBuffer,*(uint32_t*) NWManager, NW_vDmaBuffer))
 	{	printf("Failted to map dmaBuffers");
 		for(;;);
 	}
