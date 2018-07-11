@@ -97,9 +97,10 @@ void queueSendService(uint32_t data2){
   //int i;
   //for(i=0;i<20;i++)
     //printf("%d\n",dataToSend->ucData[i] );
-  xQueueSend(queueToSend,(void*)interBuffer,tickToWait);
+  uint32_t returnQueue = xQueueSend(queueToSend,(void*)interBuffer,tickToWait);
 
   printf("Message waiting %d\r\n",uxQueueMessagesWaiting(queueToSend));
+  *(uint32_t*)(dataCall+0x1000+4) = returnQueue;
   if(Pip_MapPageWrapper(dataCall,partitionCaller,data2)){
     printf("Error in mapping service result\r\n");
   }
@@ -129,11 +130,13 @@ void queueReceiveService(uint32_t data2){
   void * buffer = (void*) Pip_RemoveVAddr(partitionCaller,bufferReceive);
   printf("Buffer is %x\r\n",buffer);
   printf("Queue for receiving is %x\r\n",queueToSend);
-  xQueueReceive(queueToSend,buffer,tickToWait);
+  uint32_t returnQueue = xQueueReceive(queueToSend,buffer,tickToWait);
 
   printf("Message waiting %d\r\n",uxQueueMessagesWaiting(queueToSend));
 
   printf("Data received\r\n");
+
+  *(uint32_t*)(buffer+(0x1000-0x4)) = returnQueue;
   if(Pip_MapPageWrapper(dataCall,partitionCaller,data2)){
     printf("Error in mapping service result\r\n");
   }
