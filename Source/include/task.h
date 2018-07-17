@@ -2054,6 +2054,11 @@ void *pvTaskIncrementMutexHeldCount( void ) PRIVILEGED_FUNCTION;
 uint32_t xTaskSwitchToProtectedTask();
 
 
+void vSetTaskBuffer(uint32_t * buffer,uint32_t where);
+
+uint32_t xGetTaskBuffer(uint32_t * task);
+
+uint32_t xGetTaskWhereTo(uint32_t * task);
 #ifdef __cplusplus
 }
 #endif

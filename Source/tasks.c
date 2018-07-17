@@ -199,7 +199,8 @@ typedef struct tskTaskControlBlock {
 	vidt_t *vidt;
 	uint32_t typeOfTask;
 	uint32_t started;
-
+	uint32_t * bufferData;
+	uint32_t whereToMap;
 
 } tskTCB;
 
@@ -618,9 +619,22 @@ uint32_t xTaskPartitionCreate(uint32_t base, uint32_t length,
 	uint32_t lastPage = load_addr + offset;
 	printf("Partition mapped, last page : %x\r\n",lastPage);
 
-
-	printf("Mapping additional memory for child\r\n");
+	printf("Mapping return function buffer\r\n");
 	uint32_t page;
+	page = allocPage();
+	if (mapPageWrapper(page, (uint32_t)partitionEntry, (uint32_t)0x600000 )) {
+		printf("Fail to map return function buffer the partition\r\n");
+		goto fail;
+	}
+	printf("Mapping return service value\r\n");
+
+	page = allocPage();
+	if (mapPageWrapper(page, (uint32_t)partitionEntry, (uint32_t)0x601000 )) {
+		printf("Fail to map return service value for the partition\r\n");
+		goto fail;
+	}
+	printf("Mapping additional memory for child\r\n");
+
 	pip_fpinfo * allocMem = (pip_fpinfo*) allocPage();
 
 	allocMem->magic = FPINFO_MAGIC;
@@ -647,7 +661,7 @@ uint32_t xTaskPartitionCreate(uint32_t base, uint32_t length,
 	printf("Mapping stack... ");
 	uint32_t stack_off = 0;
 	uint32_t stack_addr;
-	for(stack_off = 0; stack_off <= 0x10000; stack_off+=0x1000)
+	for(stack_off = 0; stack_off <= 0x20000; stack_off+=0x1000)
 	{
 	      stack_addr = (uint32_t)allocPage();
 		    if(mapPageWrapper((uint32_t)stack_addr, (uint32_t)partitionEntry, (uint32_t)0xB10000 + (stack_off)))
@@ -655,7 +669,7 @@ uint32_t xTaskPartitionCreate(uint32_t base, uint32_t length,
 			    printf("Couldn't map stack.\r\n");
 			    goto fail;
 		    }
-	    }
+	}
 	printf("Done.\r\n");
 	printf("Mapping interrupt stack...\r\n");
   uint32_t isstack_addr = (uint32_t*)allocPage();
@@ -669,7 +683,7 @@ uint32_t xTaskPartitionCreate(uint32_t base, uint32_t length,
 	printf("Task VIDT at %x\r\n",pcTCB->vidt);
 
 	pcTCB->vidt->vint[0].eip = load_addr;
-	pcTCB->vidt->vint[0].esp = 0xB10000 + 0x1000 - sizeof(uint32_t);
+	pcTCB->vidt->vint[0].esp = 0xB10000 + 0x20000 - sizeof(uint32_t);
 	pcTCB->vidt->flags = 0x1;
 
 
@@ -2412,12 +2426,14 @@ void vTaskSwitchContext(void) {
 
 		if (!pxCurrentTCB->typeOfTask) {
 			//printf("Dispatching to the next protected Task %x\r\n",pxCurrentTCB->typeOfTask);
-
+			//printf("Current list of event for this task %x\r\n",pxCurrentTCB->xEventListItem);
 			if(pxCurrentTCB->started)
 			{
 				//printf("Resume Partition %x\r\n",pxCurrentTCB->pxTopOfStack);
 				enableSerialInChild();
 				if(pxCurrentTCB->vidt->flags){
+					//printf("Check if there is any event for this task %x\r\n",*(uint32_t*)(pxCurrentTCB->xEventListItem.pvOwner));
+					//printf("Resume %x\r\n",*(uint32_t*)pxCurrentTCB);
 					Pip_Resume((uint32_t*)pxCurrentTCB->pxTopOfStack,1);
 				}
 				Pip_Notify((uint32_t) pxCurrentTCB->pxTopOfStack, 33, 0, 0);
@@ -4517,6 +4533,26 @@ BaseType_t xTaskNotifyStateClear(TaskHandle_t xTask) {
 }
 
 #endif /* configUSE_TASK_NOTIFICATIONS */
+
+void vSetTaskBuffer(uint32_t * buffer,uint32_t where){
+	pxCurrentTCB->bufferData = buffer;
+	pxCurrentTCB->whereToMap = where;
+}
+
+uint32_t xGetTaskBuffer(uint32_t * task){
+	TCB_t * pxTCB;
+	pxTCB = (TCB_t*) task;
+
+	return pxTCB->bufferData;
+}
+
+uint32_t xGetTaskWhereTo(uint32_t * task){
+	TCB_t * pxTCB;
+	pxTCB = (TCB_t*) task;
+
+	return pxTCB->whereToMap;
+}
+
 
 #ifdef FREERTOS_MODULE_TEST
 #include "tasks_test_access_functions.h"

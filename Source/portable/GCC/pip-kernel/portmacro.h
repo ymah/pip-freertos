@@ -122,7 +122,7 @@ in the portYIELD_INTERRUPT definition immediately below. */
 #define portAPIC_YIELD_INT_VECTOR 		( 0x20 )
 
 /* Build yield interrupt instruction. */
-#define portYIELD_INTERRUPT "call vPortYieldCall"
+#define portYIELD_INTERRUPT "call vTaskSwitchContext"
 
 /* APIC register addresses. */
 #define portAPIC_EOI					( *( ( volatile uint32_t * ) configAPIC_BASE + 0xB0 ) )
