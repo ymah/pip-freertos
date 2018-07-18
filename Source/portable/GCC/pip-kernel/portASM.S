@@ -180,7 +180,6 @@ vPortStartFirstTask:
 
 	.endif /* configSUPPORT_FPU */
 
-	//enableInterrupt
   call Pip_VSTI
   popa
 	iret

@@ -78,7 +78,11 @@ task.h is included from an application file. */
 #include "FreeRTOS.h"
 #include "task.h"
 #include "queue.h"
-
+#include <pip/paging.h>
+#include <pip/api.h>
+#include <pip/vidt.h>
+#include <pip/compat.h>
+#include <pip/fpinfo.h>
 #if ( configUSE_CO_ROUTINES == 1 )
 	#include "croutine.h"
 #endif
@@ -163,6 +167,90 @@ typedef struct QueueDefinition
 /* The old xQUEUE name is maintained above then typedefed to the new Queue_t
 name below to enable the use of older kernel aware debuggers. */
 typedef xQUEUE Queue_t;
+
+
+
+/* Value that can be assigned to the eNotifyState member of the TCB. */
+typedef enum {
+	eNotWaitingNotification = 0, eWaitingNotification, eNotified
+} eNotifyValue;
+
+/*
+ * Task control block.  A task control block (TCB) is allocated for each task,
+ * and stores task state information, including a pointer to the task's context
+ * (the task's run time environment, including register values)
+ */
+typedef struct tskTaskControlBlock {
+	volatile StackType_t *pxTopOfStack; /*< Points to the location of the last item placed on the tasks stack.  THIS MUST BE THE FIRST MEMBER OF THE TCB STRUCT. */
+
+#if ( portUSING_MPU_WRAPPERS == 1 )
+	xMPU_SETTINGS xMPUSettings; /*< The MPU settings are defined as part of the port layer.  THIS MUST BE THE SECOND MEMBER OF THE TCB STRUCT. */
+	BaseType_t xUsingStaticallyAllocatedStack; /* Set to pdTRUE if the stack is a statically allocated array, and pdFALSE if the stack is dynamically allocated. */
+#endif
+
+	ListItem_t xGenericListItem; /*< The list that the state list item of a task is reference from denotes the state of that task (Ready, Blocked, Suspended ). */
+	ListItem_t xEventListItem; /*< Used to reference a task from an event list. */
+	UBaseType_t uxPriority; /*< The priority of the task.  0 is the lowest priority. */
+	StackType_t *pxStack; /*< Points to the start of the stack. */
+	char pcTaskName[configMAX_TASK_NAME_LEN];/*< Descriptive name given to the task when created.  Facilitates debugging only. *//*lint !e971 Unqualified char types are allowed for strings and single characters only. */
+
+#if ( portSTACK_GROWTH > 0 )
+	StackType_t *pxEndOfStack; /*< Points to the end of the stack on architectures where the stack grows up from low memory. */
+#endif
+
+#if ( portCRITICAL_NESTING_IN_TCB == 1 )
+	UBaseType_t uxCriticalNesting; /*< Holds the critical section nesting depth for ports that do not maintain their own count in the port layer. */
+#endif
+
+#if ( configUSE_TRACE_FACILITY == 1 )
+	UBaseType_t uxTCBNumber; /*< Stores a number that increments each time a TCB is created.  It allows debuggers to determine when a task has been deleted and then recreated. */
+	UBaseType_t uxTaskNumber; /*< Stores a number specifically for use by third party trace code. */
+#endif
+
+#if ( configUSE_MUTEXES == 1 )
+	UBaseType_t uxBasePriority; /*< The priority last assigned to the task - used by the priority inheritance mechanism. */
+	UBaseType_t uxMutexesHeld;
+#endif
+
+#if ( configUSE_APPLICATION_TASK_TAG == 1 )
+	TaskHookFunction_t pxTaskTag;
+#endif
+
+#if( configNUM_THREAD_LOCAL_STORAGE_POINTERS > 0 )
+	void *pvThreadLocalStoragePointers[ configNUM_THREAD_LOCAL_STORAGE_POINTERS ];
+#endif
+
+#if ( configGENERATE_RUN_TIME_STATS == 1 )
+	uint32_t ulRunTimeCounter; /*< Stores the amount of time the task has spent in the Running state. */
+#endif
+
+#if ( configUSE_NEWLIB_REENTRANT == 1 )
+	/* Allocate a Newlib reent structure that is specific to this task.
+	 Note Newlib support has been included by popular demand, but is not
+	 used by the FreeRTOS maintainers themselves.  FreeRTOS is not
+	 responsible for resulting newlib operation.  User must be familiar with
+	 newlib and must provide system-wide implementations of the necessary
+	 stubs. Be warned that (at the time of writing) the current newlib design
+	 implements a system-wide malloc() that must be provided with locks. */
+	struct _reent xNewLib_reent;
+#endif
+
+#if ( configUSE_TASK_NOTIFICATIONS == 1 )
+	volatile uint32_t ulNotifiedValue;
+	volatile eNotifyValue eNotifyState;
+#endif
+
+	vidt_t *vidt;
+	uint32_t typeOfTask;
+	uint32_t started;
+
+
+} tskTCB;
+
+/* The old tskTCB name is maintained above then typedefed to the new TCB_t name
+ below to enable the use of older kernel aware debuggers. */
+typedef tskTCB TCB_t;
+
 
 /*-----------------------------------------------------------*/
 
@@ -605,7 +693,7 @@ QueueHandle_t xReturn = NULL;
 
 #endif /* configUSE_COUNTING_SEMAPHORES */
 /*-----------------------------------------------------------*/
-
+extern void * pxCurrentTCB;
 BaseType_t xQueueGenericSend( QueueHandle_t xQueue, const void * const pvItemToQueue, TickType_t xTicksToWait, const BaseType_t xCopyPosition )
 {
 BaseType_t xEntryTimeSet = pdFALSE, xYieldRequired;
@@ -627,6 +715,7 @@ Queue_t * const pxQueue = ( Queue_t * ) xQueue;
 	of execution time efficiency. */
 	for( ;; )
 	{
+		printf("Boucling in send\r\n");
 		taskENTER_CRITICAL();
 		{
 			/* Is there room on the queue now?  The running task must be the
@@ -660,12 +749,31 @@ Queue_t * const pxQueue = ( Queue_t * ) xQueue;
 						queue then unblock it now. */
 						if( listLIST_IS_EMPTY( &( pxQueue->xTasksWaitingToReceive ) ) == pdFALSE )
 						{
+							// TCB_t * tcbToSwitch = (TCB_t*)pxQueue->xTasksWaitingToReceive.pxIndex->pvOwner;
+							// printf("tcbToSwitch %x\r\n",*(uint32_t*)(tcbToSwitch));
+							uint32_t * pxUnblockedTCB = (uint32_t*)listGET_OWNER_OF_HEAD_ENTRY(&( pxQueue->xTasksWaitingToReceive ));
+							configASSERT(pxUnblockedTCB);
+							printf("Unblocked TCB %x\r\n",*(uint32_t*)pxUnblockedTCB);
 							if( xTaskRemoveFromEventList( &( pxQueue->xTasksWaitingToReceive ) ) == pdTRUE )
 							{
 								/* The unblocked task has a priority higher than
 								our own so yield immediately.  Yes it is ok to
 								do this from within the critical section - the
 								kernel takes care of that. */
+
+								printf("There is some tasks waiting for data III...\r\n");
+								uint32_t * bufferToReceive = xGetTaskBuffer(pxUnblockedTCB);
+								uint32_t whereToMap = xGetTaskWhereTo(pxUnblockedTCB);
+								prvCopyDataFromQueue( pxQueue, bufferToReceive );
+								uint32_t * page = allocPage();
+								*page = 1;
+
+								if(mapPageWrapper(page,*(uint32_t*)pxUnblockedTCB,0x600000))
+									printf("Error in mapping result queue\r\n");
+
+								if(mapPageWrapper(bufferToReceive,*(uint32_t*)pxUnblockedTCB,whereToMap))
+									printf("Error in mapping buffer for queue\r\n");
+
 								queueYIELD_IF_USING_PREEMPTION();
 							}
 							else
@@ -679,6 +787,7 @@ Queue_t * const pxQueue = ( Queue_t * ) xQueue;
 							executed if the task was holding multiple mutexes
 							and the mutexes were given back in an order that is
 							different to that in which they were taken. */
+							printf("There is some tasks waiting for data IV...\r\n");
 							queueYIELD_IF_USING_PREEMPTION();
 						}
 						else
@@ -693,12 +802,27 @@ Queue_t * const pxQueue = ( Queue_t * ) xQueue;
 					queue then unblock it now. */
 					if( listLIST_IS_EMPTY( &( pxQueue->xTasksWaitingToReceive ) ) == pdFALSE )
 					{
+						uint32_t * pxUnblockedTCB = (uint32_t*)listGET_OWNER_OF_HEAD_ENTRY(&( pxQueue->xTasksWaitingToReceive ));
+						configASSERT(pxUnblockedTCB);
+						printf("Unblocked TCB %x\r\n",*(uint32_t*)pxUnblockedTCB);
 						if( xTaskRemoveFromEventList( &( pxQueue->xTasksWaitingToReceive ) ) == pdTRUE )
 						{
 							/* The unblocked task has a priority higher than
 							our own so yield immediately.  Yes it is ok to do
 							this from within the critical section - the kernel
 							takes care of that. */
+							printf("There is some tasks waiting for data IV...\r\n");
+							uint32_t * bufferToReceive = xGetTaskBuffer(pxUnblockedTCB);
+							uint32_t whereToMap = xGetTaskWhereTo(pxUnblockedTCB);
+							prvCopyDataFromQueue( pxQueue, bufferToReceive );
+							uint32_t * page = allocPage();
+							*page = 1;
+
+							if(mapPageWrapper(page,*(uint32_t*)pxUnblockedTCB,0x600000))
+								printf("Error in mapping result queue\r\n");
+							if(mapPageWrapper(bufferToReceive,*(uint32_t*)pxUnblockedTCB,whereToMap))
+								printf("Error in mapping buffer for queue\r\n");
+
 							queueYIELD_IF_USING_PREEMPTION();
 						}
 						else
@@ -712,6 +836,7 @@ Queue_t * const pxQueue = ( Queue_t * ) xQueue;
 						executed if the task was holding multiple mutexes and
 						the mutexes were given back in an order that is
 						different to that in which they were taken. */
+						printf("There is some tasks waiting for data VI...\r\n");
 						queueYIELD_IF_USING_PREEMPTION();
 					}
 					else
@@ -1382,16 +1507,18 @@ Queue_t * const pxQueue = ( Queue_t * ) xQueue;
 
 	for( ;; )
 	{
+		printf("Boucling in receive\r\n");
 		taskENTER_CRITICAL();
 		{
 			/* Is there data in the queue now?  To be running the calling task
 			must be	the highest priority task wanting to access the queue. */
+			//vSetTaskBuffer(pvBuffer);
 			if( pxQueue->uxMessagesWaiting > ( UBaseType_t ) 0 )
 			{
 				/* Remember the read position in case the queue is only being
 				peeked. */
 				pcOriginalReadPosition = pxQueue->u.pcReadFrom;
-
+				printf("There is something, copy data to %x in \r\n",*(uint32_t*)pxCurrentTCB,pcOriginalReadPosition);
 				prvCopyDataFromQueue( pxQueue, pvBuffer );
 
 				if( xJustPeeking == pdFALSE )
@@ -1420,6 +1547,7 @@ Queue_t * const pxQueue = ( Queue_t * ) xQueue;
 					{
 						if( xTaskRemoveFromEventList( &( pxQueue->xTasksWaitingToSend ) ) == pdTRUE )
 						{
+							printf("There is some tasks waiting for data I...\r\n");
 							queueYIELD_IF_USING_PREEMPTION();
 						}
 						else
@@ -1447,6 +1575,7 @@ Queue_t * const pxQueue = ( Queue_t * ) xQueue;
 						if( xTaskRemoveFromEventList( &( pxQueue->xTasksWaitingToReceive ) ) != pdFALSE )
 						{
 							/* The task waiting has a higher priority than this task. */
+							printf("There is some tasks waiting for data II...\r\n");
 							queueYIELD_IF_USING_PREEMPTION();
 						}
 						else
@@ -1780,7 +1909,13 @@ Queue_t * const pxQueue = ( Queue_t * ) xQueue;
 
 #endif /* configUSE_TRACE_FACILITY */
 /*-----------------------------------------------------------*/
+extern int printf0(const char *format, ...);
 
+void printtruc(char * from,int size){
+	printf("BUFFER SIZE : %x content ",size);
+	for(int i=0; i<size;i++)
+		printf0("%x '%c'",from[i],((from[i]>=32)?from[i]:'.'));
+}
 static BaseType_t prvCopyDataToQueue( Queue_t * const pxQueue, const void *pvItemToQueue, const BaseType_t xPosition )
 {
 BaseType_t xReturn = pdFALSE;
@@ -1804,6 +1939,7 @@ BaseType_t xReturn = pdFALSE;
 	}
 	else if( xPosition == queueSEND_TO_BACK )
 	{
+		//printtruc(pvItemToQueue, pxQueue->uxItemSize);
 		( void ) memcpy( ( void * ) pxQueue->pcWriteTo, pvItemToQueue, ( size_t ) pxQueue->uxItemSize ); /*lint !e961 !e418 MISRA exception as the casts are only redundant for some ports, plus previous logic ensures a null pointer can only be passed to memcpy() if the copy size is 0. */
 		pxQueue->pcWriteTo += pxQueue->uxItemSize;
 		if( pxQueue->pcWriteTo >= pxQueue->pcTail ) /*lint !e946 MISRA exception justified as comparison of pointers is the cleanest solution. */
@@ -1817,6 +1953,7 @@ BaseType_t xReturn = pdFALSE;
 	}
 	else
 	{
+				//printtruc(pvItemToQueue, pxQueue->uxItemSize);
 		( void ) memcpy( ( void * ) pxQueue->u.pcReadFrom, pvItemToQueue, ( size_t ) pxQueue->uxItemSize ); /*lint !e961 MISRA exception as the casts are only redundant for some ports. */
 		pxQueue->u.pcReadFrom -= pxQueue->uxItemSize;
 		if( pxQueue->u.pcReadFrom < pxQueue->pcHead ) /*lint !e946 MISRA exception justified as comparison of pointers is the cleanest solution. */
@@ -1868,7 +2005,11 @@ static void prvCopyDataFromQueue( Queue_t * const pxQueue, void * const pvBuffer
 		{
 			mtCOVERAGE_TEST_MARKER();
 		}
+
+		//printf("SIZE to copy  %x\r\n",pxQueue->uxItemSize);
+		//printtruc((char*)pxQueue->u.pcReadFrom,pxQueue->uxItemSize);
 		( void ) memcpy( ( void * ) pvBuffer, ( void * ) pxQueue->u.pcReadFrom, ( size_t ) pxQueue->uxItemSize ); /*lint !e961 !e418 MISRA exception as the casts are only redundant for some ports.  Also previous logic ensures a null pointer can only be passed to memcpy() when the count is 0. */
+
 	}
 }
 /*-----------------------------------------------------------*/
@@ -2594,15 +2735,3 @@ BaseType_t xReturn;
 	}
 
 #endif /* configUSE_QUEUE_SETS */
-
-
-
-
-
-
-
-
-
-
-
-

@@ -22,6 +22,26 @@ int checkAccess(){
 extern enableSerialInChild();
 extern disableSerialInChild();
 uint32_t partitionCaller;
+uint32_t * returnFunctionService;
+uint32_t * returnBufferService;
+
+
+void getFunctionCallInfo(){
+  returnFunctionService = (uint32_t *)Pip_RemoveVAddr(partitionCaller,0x600000);
+
+  returnBufferService = (uint32_t *)Pip_RemoveVAddr(partitionCaller,0x601000);
+
+}
+
+void setFunctionCallInfo(){
+  if(Pip_MapPageWrapper(returnFunctionService,partitionCaller,0x600000)){
+    printf("Error in mapping service result\r\n");
+  }
+  if(Pip_MapPageWrapper(returnBufferService,partitionCaller,0x601000)){
+    printf("Error in mapping service buffer\r\n");
+  }
+}
+
 void queueCreateService(uint32_t data2){
 
   printf("Starting QueueCreate services by %x\r\n",partitionCaller);
@@ -49,15 +69,11 @@ void queueCreateService(uint32_t data2){
   }
   printf("resuming\r\n");
     enableSerialInChild();
+    setFunctionCallInfo();
   resume(partitionCaller, 1);
 }
 
 
-struct AMessage
- {
-    char ucMessageID;
-    char ucData[ 20 ];
- } xMessage;
 
 
  void* my_memcpy(void* destination, void* source, size_t num)
@@ -70,6 +86,7 @@ struct AMessage
  	}
  	return destination;
  }
+
 
 void queueSendService(uint32_t data2){
 
@@ -93,25 +110,22 @@ void queueSendService(uint32_t data2){
 
 
   Pip_MapPageWrapper(dataToSend,partitionCaller,itemToQueue);
-  //printf("Data to send %x\r\n",dataToSend);
-  //int i;
-  //for(i=0;i<20;i++)
-    //printf("%d\n",dataToSend->ucData[i] );
+
   uint32_t returnQueue = xQueueSend(queueToSend,(void*)interBuffer,tickToWait);
 
+  *(uint32_t*)returnFunctionService = returnQueue;
+
   printf("Message waiting %d\r\n",uxQueueMessagesWaiting(queueToSend));
-  *(uint32_t*)(dataCall+0x1000+4) = returnQueue;
+
   if(Pip_MapPageWrapper(dataCall,partitionCaller,data2)){
     printf("Error in mapping service result\r\n");
   }
   printf("Resuming partition after sending\n",queue);
   enableSerialInChild();
+  setFunctionCallInfo();
   resume(partitionCaller, 1);
 }
 void queueReceiveService(uint32_t data2){
-
-
-
 
   printf("Starting queueReceive services by %x\r\n",partitionCaller);
   uint32_t * dataCall;
@@ -128,23 +142,28 @@ void queueReceiveService(uint32_t data2){
 
   QueueHandle_t queueToSend = (QueueHandle_t)queue; //(QueueHandle_t*) Pip_RemoveVAddr(partitionCaller,queue);
   void * buffer = (void*) Pip_RemoveVAddr(partitionCaller,bufferReceive);
+  //void * buffer = (void*) bufferReceive;
+
   printf("Buffer is %x\r\n",buffer);
   printf("Queue for receiving is %x\r\n",queueToSend);
+
+  vSetTaskBuffer((uint32_t*)buffer,(uint32_t)bufferReceive);
+
   uint32_t returnQueue = xQueueReceive(queueToSend,buffer,tickToWait);
 
-  printf("Message waiting %d\r\n",uxQueueMessagesWaiting(queueToSend));
+  *(uint32_t*)returnFunctionService = returnQueue;
 
   printf("Data received\r\n");
 
-  *(uint32_t*)(buffer+(0x1000-0x4)) = returnQueue;
   if(Pip_MapPageWrapper(dataCall,partitionCaller,data2)){
     printf("Error in mapping service result\r\n");
   }
-  if(Pip_MapPageWrapper(buffer,partitionCaller,bufferReceive)){
-    printf("Error in mapping service result\r\n");
-  }
+  // if(Pip_MapPageWrapper(buffer,partitionCaller,bufferReceive)){
+  //   printf("Error in mapping service result\r\n");
+  // }
   printf("Resuming partition after receiving\n");
   enableSerialInChild();
+  setFunctionCallInfo();
   resume(partitionCaller, 1);
 }
 
@@ -177,6 +196,7 @@ void sbrkService(uint32_t data2){
   }
   printf("return from sbrk service\r\n" );
   enableSerialInChild();
+  setFunctionCallInfo();
   resume(partitionCaller, 1);
 
 }
@@ -213,6 +233,7 @@ void channelService(uint32_t data2){
 
   printf("return from channelCom service service\r\n" );
   enableSerialInChild();
+setFunctionCallInfo();
   resume(partitionCaller, 1);
 
 }
@@ -220,10 +241,14 @@ void channelService(uint32_t data2){
 
 
 INTERRUPT_HANDLER(serviceRoutineAsm,serviceRoutine)
+  Pip_VCLI();
   disableSerialInChild();
-  printf("Starting service ");
-  printf("Data1 %d, data2 %x\r\n",data1,data2);
-  partitionCaller = caller;
+  printf("Starting service data1 %d, data2 %x \r\n",data1,data2);
+
+
+  partitionCaller = *(uint32_t*)pxCurrentTCB;
+  getFunctionCallInfo();
+
   if(!checkAccess())
     printf("No rights for this partition\r\n");
   switch (data1) {

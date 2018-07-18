@@ -251,7 +251,7 @@ void main()
 	QueueHandle_t xQueue_2SP1D_IC = Null;
 	QueueHandle_t xQueue_2SP2D_IC = Null;
 	QueueHandle_t xQueue_2SP3D_IC = Null;
-
+	printf("size of even_t %x\r\n",sizeof (event_t) );
 	xQueue_2NW  = xQueueCreate( mainQUEUE_LENGTH, sizeof (event_t) );
 	xQueue_2OD_IC  = xQueueCreate( mainQUEUE_LENGTH, sizeof (event_t) );
 	xQueue_2SP1D_IC  = xQueueCreate( mainQUEUE_LENGTH, sizeof (event_t) );
@@ -325,13 +325,13 @@ void main()
 
 
 	size = part1.end - part1.start;
-	xTaskCreateProtected(part1.start, "owner", size, queueOwner, configMAX_PRIORITIES - 1, &owner);
+	xTaskCreateProtected(part1.start, "owner", size, queueOwner, configMAX_PRIORITIES - 2, &owner);
 	printf("Create Owner task partition 0x%x\r\n",owner);
 
 
 
 	size = part2.end - part2.start;
-	xTaskCreateProtected(part2.start, "sp1 task", size, queueSP1, configMAX_PRIORITIES - 2, &sp1);
+	xTaskCreateProtected(part2.start, "sp1 task", size, queueSP1, configMAX_PRIORITIES - 3, &sp1);
 	printf("Create SP1 task partition 0x%x\r\n",sp1);
 
 
@@ -342,11 +342,11 @@ void main()
 
 
 	size = part4.end - part4.start;
-	xTaskCreateProtected(part4.start, "sp3 task", size, queueSP3, configMAX_PRIORITIES - 4, &sp3);
+	xTaskCreateProtected(part4.start, "sp3 task", size, queueSP3, configMAX_PRIORITIES - 3, &sp3);
 	printf("Create SP3 task partition 0x%x\r\n",sp3);
 
 	size = part5.end - part5.start;
-	xTaskCreateProtected(part5.start, "Network Manager", size, queueNwMgr, configMAX_PRIORITIES - 5, &NWManager);
+	xTaskCreateProtected(part5.start, "Network Manager", size, queueNwMgr, configMAX_PRIORITIES - 4, &NWManager);
 
 
 
@@ -375,9 +375,9 @@ void main()
 	mapPageWrapper((uint32_t) 0xE00A1000,*(uint32_t*)NWManager, 0xE00A1000);
 	mapPageWrapper((uint32_t) 0x9000F000,*(uint32_t*) NWManager, 0x9000F000);
 	mapPageWrapper((uint32_t) 0x9000E000,*(uint32_t*) NWManager, 0x9000E000);
-	mapPageWrapper((uint32_t) 0xE00AA000,*(uint32_t*) NWManager, 0xE00AA000);
-	mapPageWrapper((uint32_t) 0x90006000,*(uint32_t*) NWManager, 0x90006000);
-	mapPageWrapper((uint32_t) 0x90007000,*(uint32_t*) NWManager, 0x90007000);
+	//mapPageWrapper((uint32_t) 0xE00AA000,*(uint32_t*) NWManager, 0xE00AA000);
+	//mapPageWrapper((uint32_t) 0x90006000,*(uint32_t*) NWManager, 0x90006000);
+	//mapPageWrapper((uint32_t) 0x90007000,*(uint32_t*) NWManager, 0x90007000);
 
 	if(mapPageWrapper((uint32_t) vDmaBuffer,*(uint32_t*) NWManager, NW_vDmaBuffer))
 	{	printf("Failted to map dmaBuffers");

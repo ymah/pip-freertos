@@ -184,6 +184,15 @@ int printf(const char *format, ...)
         return print( 0, format, args );
 }
 
+
+int printf0(const char *format, ...)
+{
+
+        va_list args;
+
+        va_start( args, format );
+        return print( 0, format, args );
+}
 int sprintf(char *out, const char *format, ...)
 {
 		Pip_Debug_Puts("[FreeRTOS-multiplexer] ");
