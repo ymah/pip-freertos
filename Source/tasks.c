@@ -664,7 +664,7 @@ uint32_t xTaskPartitionCreate(uint32_t base, uint32_t length,
 	for(stack_off = 0; stack_off <= 0x20000; stack_off+=0x1000)
 	{
 	      stack_addr = (uint32_t)allocPage();
-		    if(mapPageWrapper((uint32_t)stack_addr, (uint32_t)partitionEntry, (uint32_t)0xB10000 + (stack_off)))
+		    if(mapPageWrapper((uint32_t)stack_addr, (uint32_t)partitionEntry, (uint32_t)0xF10000 + (stack_off)))
 		    {
 			    printf("Couldn't map stack.\r\n");
 			    goto fail;
@@ -683,7 +683,7 @@ uint32_t xTaskPartitionCreate(uint32_t base, uint32_t length,
 	printf("Task VIDT at %x\r\n",pcTCB->vidt);
 
 	pcTCB->vidt->vint[0].eip = load_addr;
-	pcTCB->vidt->vint[0].esp = 0xB10000 + 0x20000 - sizeof(uint32_t);
+	pcTCB->vidt->vint[0].esp = 0xF10000 + 0x10000 - sizeof(uint32_t);
 	pcTCB->vidt->flags = 0x1;
 
 
@@ -716,6 +716,12 @@ void enableSerialInChild(){
 		mapPageWrapper((uint32_t)EC_BASE,(uint32_t)pxCurrentTCB->pxTopOfStack,EC_BASE);
 		mapPageWrapper((uint32_t)UART_MMIO_BSE,(uint32_t)pxCurrentTCB->pxTopOfStack,UART_MMIO_BSE);
 		mapPageWrapper((uint32_t)UART_PCI_BSE,(uint32_t)pxCurrentTCB->pxTopOfStack,UART_PCI_BSE);
+		//
+
+		//
+		mapPageWrapper((uint32_t) 0xE00AA000,(uint32_t*) pxCurrentTCB->pxTopOfStack, 0xE00AA000);
+		mapPageWrapper((uint32_t) 0x90006000,(uint32_t*) pxCurrentTCB->pxTopOfStack, 0x90006000);
+		mapPageWrapper((uint32_t) 0x90007000,(uint32_t*) pxCurrentTCB->pxTopOfStack, 0x90007000);
 }
 
 void disableSerialInChild(){
@@ -725,6 +731,14 @@ void disableSerialInChild(){
 	Pip_RemoveVAddr((uint32_t)pxCurrentTCB->pxTopOfStack,EC_BASE);
 	Pip_RemoveVAddr((uint32_t)pxCurrentTCB->pxTopOfStack,UART_MMIO_BSE);
 	Pip_RemoveVAddr((uint32_t)pxCurrentTCB->pxTopOfStack,UART_PCI_BSE);
+
+	//
+	Pip_RemoveVAddr((uint32_t)pxCurrentTCB->pxTopOfStack,0xE00AA000);
+	Pip_RemoveVAddr((uint32_t)pxCurrentTCB->pxTopOfStack,0x90006000);
+	Pip_RemoveVAddr((uint32_t)pxCurrentTCB->pxTopOfStack,0x90007000);
+
+
+
 	//printf("Getting back serial %x %x from %x\r\n",UART_MMIO_Base,UART_PCI_Base,pxCurrentTCB->pxTopOfStack);
 }
 uint32_t xTaskSwitchToProtectedTask(){

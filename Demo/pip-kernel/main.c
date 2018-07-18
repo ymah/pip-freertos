@@ -375,9 +375,9 @@ void main()
 	mapPageWrapper((uint32_t) 0xE00A1000,*(uint32_t*)NWManager, 0xE00A1000);
 	mapPageWrapper((uint32_t) 0x9000F000,*(uint32_t*) NWManager, 0x9000F000);
 	mapPageWrapper((uint32_t) 0x9000E000,*(uint32_t*) NWManager, 0x9000E000);
-	mapPageWrapper((uint32_t) 0xE00AA000,*(uint32_t*) NWManager, 0xE00AA000);
-	mapPageWrapper((uint32_t) 0x90006000,*(uint32_t*) NWManager, 0x90006000);
-	mapPageWrapper((uint32_t) 0x90007000,*(uint32_t*) NWManager, 0x90007000);
+	//mapPageWrapper((uint32_t) 0xE00AA000,*(uint32_t*) NWManager, 0xE00AA000);
+	//mapPageWrapper((uint32_t) 0x90006000,*(uint32_t*) NWManager, 0x90006000);
+	//mapPageWrapper((uint32_t) 0x90007000,*(uint32_t*) NWManager, 0x90007000);
 
 	if(mapPageWrapper((uint32_t) vDmaBuffer,*(uint32_t*) NWManager, NW_vDmaBuffer))
 	{	printf("Failted to map dmaBuffers");
