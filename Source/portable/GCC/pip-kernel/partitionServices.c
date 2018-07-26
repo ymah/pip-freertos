@@ -21,15 +21,14 @@ int checkAccess(){
 
 extern enableSerialInChild();
 extern disableSerialInChild();
-uint32_t partitionCaller;
-uint32_t * returnFunctionService;
-uint32_t * returnBufferService;
+uint32_t * partitionCaller = NULL;
+uint32_t * returnFunctionService = NULL;
 
 
 void getFunctionCallInfo(){
-  returnFunctionService = (uint32_t *)Pip_RemoveVAddr(partitionCaller,0x600000);
 
-  returnBufferService = (uint32_t *)Pip_RemoveVAddr(partitionCaller,0x601000);
+
+  returnFunctionService = (uint32_t *)Pip_RemoveVAddr(partitionCaller,0x600000);
 
 }
 
@@ -37,9 +36,7 @@ void setFunctionCallInfo(){
   if(Pip_MapPageWrapper(returnFunctionService,partitionCaller,0x600000)){
     printf("Error in mapping service result\r\n");
   }
-  if(Pip_MapPageWrapper(returnBufferService,partitionCaller,0x601000)){
-    printf("Error in mapping service buffer\r\n");
-  }
+
 }
 
 void queueCreateService(uint32_t data2){
@@ -68,8 +65,8 @@ void queueCreateService(uint32_t data2){
     printf("Error in mapping service result\r\n");
   }
   printf("resuming\r\n");
-    enableSerialInChild();
-    setFunctionCallInfo();
+  enableSerialInChild();
+  setFunctionCallInfo();
   resume(partitionCaller, 1);
 }
 
@@ -109,22 +106,26 @@ void queueSendService(uint32_t data2){
   my_memcpy(interBuffer, dataToSend, 0x1000);
 
 
-  Pip_MapPageWrapper(dataToSend,partitionCaller,itemToQueue);
+  if(Pip_MapPageWrapper(dataToSend,partitionCaller,itemToQueue))
+    printf("Error in remapping datas into sender\r\n");
 
-  uint32_t returnQueue = xQueueSend(queueToSend,(void*)interBuffer,tickToWait);
+  *returnFunctionService= xQueueSend(queueToSend,(void*)interBuffer,tickToWait);
 
-  *(uint32_t*)returnFunctionService = returnQueue;
 
   printf("Message waiting %d\r\n",uxQueueMessagesWaiting(queueToSend));
 
   if(Pip_MapPageWrapper(dataCall,partitionCaller,data2)){
     printf("Error in mapping service result\r\n");
   }
-  printf("Resuming partition after sending\n",queue);
+  printf("Resuming partition after sending\r\n",queue);
   enableSerialInChild();
   setFunctionCallInfo();
+
+  printf("Resume %x\r\n",partitionCaller);
   resume(partitionCaller, 1);
 }
+
+
 void queueReceiveService(uint32_t data2){
 
   printf("Starting queueReceive services by %x\r\n",partitionCaller);
@@ -158,9 +159,9 @@ void queueReceiveService(uint32_t data2){
   if(Pip_MapPageWrapper(dataCall,partitionCaller,data2)){
     printf("Error in mapping service result\r\n");
   }
-  // if(Pip_MapPageWrapper(buffer,partitionCaller,bufferReceive)){
-  //   printf("Error in mapping service result\r\n");
-  // }
+  if(Pip_MapPageWrapper(buffer,partitionCaller,bufferReceive)){
+    printf("Error in mapping service result\r\n");
+  }
   printf("Resuming partition after receiving\n");
   enableSerialInChild();
   setFunctionCallInfo();
@@ -233,7 +234,7 @@ void channelService(uint32_t data2){
 
   printf("return from channelCom service service\r\n" );
   enableSerialInChild();
-setFunctionCallInfo();
+  setFunctionCallInfo();
   resume(partitionCaller, 1);
 
 }

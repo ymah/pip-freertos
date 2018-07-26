@@ -715,7 +715,6 @@ Queue_t * const pxQueue = ( Queue_t * ) xQueue;
 	of execution time efficiency. */
 	for( ;; )
 	{
-		printf("Boucling in send\r\n");
 		taskENTER_CRITICAL();
 		{
 			/* Is there room on the queue now?  The running task must be the
@@ -753,7 +752,7 @@ Queue_t * const pxQueue = ( Queue_t * ) xQueue;
 							// printf("tcbToSwitch %x\r\n",*(uint32_t*)(tcbToSwitch));
 							uint32_t * pxUnblockedTCB = (uint32_t*)listGET_OWNER_OF_HEAD_ENTRY(&( pxQueue->xTasksWaitingToReceive ));
 							configASSERT(pxUnblockedTCB);
-							printf("Unblocked TCB %x\r\n",*(uint32_t*)pxUnblockedTCB);
+							printf("Unblocked TCB %x ?\r\n",*(uint32_t*)pxUnblockedTCB);
 							if( xTaskRemoveFromEventList( &( pxQueue->xTasksWaitingToReceive ) ) == pdTRUE )
 							{
 								/* The unblocked task has a priority higher than
@@ -804,7 +803,7 @@ Queue_t * const pxQueue = ( Queue_t * ) xQueue;
 					{
 						uint32_t * pxUnblockedTCB = (uint32_t*)listGET_OWNER_OF_HEAD_ENTRY(&( pxQueue->xTasksWaitingToReceive ));
 						configASSERT(pxUnblockedTCB);
-						printf("Unblocked TCB %x\r\n",*(uint32_t*)pxUnblockedTCB);
+						printf("Unblocked TCB %x ?\r\n",*(uint32_t*)pxUnblockedTCB);
 						if( xTaskRemoveFromEventList( &( pxQueue->xTasksWaitingToReceive ) ) == pdTRUE )
 						{
 							/* The unblocked task has a priority higher than
@@ -827,6 +826,7 @@ Queue_t * const pxQueue = ( Queue_t * ) xQueue;
 						}
 						else
 						{
+							printf("Do not unblock TCB %x\r\n",*(uint32_t*)pxUnblockedTCB);
 							mtCOVERAGE_TEST_MARKER();
 						}
 					}
@@ -1545,9 +1545,26 @@ Queue_t * const pxQueue = ( Queue_t * ) xQueue;
 
 					if( listLIST_IS_EMPTY( &( pxQueue->xTasksWaitingToSend ) ) == pdFALSE )
 					{
+						// TCB_t * tcbToSwitch = (TCB_t*)pxQueue->xTasksWaitingToReceive.pxIndex->pvOwner;
+						// printf("tcbToSwitch %x\r\n",*(uint32_t*)(tcbToSwitch));
+						uint32_t * pxUnblockedTCB = (uint32_t*)listGET_OWNER_OF_HEAD_ENTRY(&( pxQueue->xTasksWaitingToReceive ));
+						configASSERT(pxUnblockedTCB);
+						printf("Receive unblocked TCB %x ?\r\n",*(uint32_t*)pxUnblockedTCB);
 						if( xTaskRemoveFromEventList( &( pxQueue->xTasksWaitingToSend ) ) == pdTRUE )
 						{
 							printf("There is some tasks waiting for data I...\r\n");
+							uint32_t * bufferToReceive = xGetTaskBuffer(pxUnblockedTCB);
+							uint32_t whereToMap = xGetTaskWhereTo(pxUnblockedTCB);
+							prvCopyDataFromQueue( pxQueue, bufferToReceive );
+							uint32_t * page = allocPage();
+							*page = 1;
+
+							if(mapPageWrapper(page,*(uint32_t*)pxUnblockedTCB,0x600000))
+								printf("Error in mapping result queue\r\n");
+
+							if(mapPageWrapper(bufferToReceive,*(uint32_t*)pxUnblockedTCB,whereToMap))
+								printf("Error in mapping buffer for queue\r\n");
+
 							queueYIELD_IF_USING_PREEMPTION();
 						}
 						else
@@ -1572,10 +1589,24 @@ Queue_t * const pxQueue = ( Queue_t * ) xQueue;
 					any other tasks waiting for the data. */
 					if( listLIST_IS_EMPTY( &( pxQueue->xTasksWaitingToReceive ) ) == pdFALSE )
 					{
+						uint32_t * pxUnblockedTCB = (uint32_t*)listGET_OWNER_OF_HEAD_ENTRY(&( pxQueue->xTasksWaitingToReceive ));
+						configASSERT(pxUnblockedTCB);
+						printf("Receive unblocked TCB %x ?\r\n",*(uint32_t*)pxUnblockedTCB);
 						if( xTaskRemoveFromEventList( &( pxQueue->xTasksWaitingToReceive ) ) != pdFALSE )
 						{
 							/* The task waiting has a higher priority than this task. */
 							printf("There is some tasks waiting for data II...\r\n");
+							uint32_t * bufferToReceive = xGetTaskBuffer(pxUnblockedTCB);
+							uint32_t whereToMap = xGetTaskWhereTo(pxUnblockedTCB);
+							prvCopyDataFromQueue( pxQueue, bufferToReceive );
+							uint32_t * page = allocPage();
+							*page = 1;
+
+							if(mapPageWrapper(page,*(uint32_t*)pxUnblockedTCB,0x600000))
+								printf("Error in mapping result queue\r\n");
+
+							if(mapPageWrapper(bufferToReceive,*(uint32_t*)pxUnblockedTCB,whereToMap))
+								printf("Error in mapping buffer for queue\r\n");
 							queueYIELD_IF_USING_PREEMPTION();
 						}
 						else
