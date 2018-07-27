@@ -1512,7 +1512,7 @@ Queue_t * const pxQueue = ( Queue_t * ) xQueue;
 		{
 			/* Is there data in the queue now?  To be running the calling task
 			must be	the highest priority task wanting to access the queue. */
-			//vSetTaskBuffer(pvBuffer);
+
 			if( pxQueue->uxMessagesWaiting > ( UBaseType_t ) 0 )
 			{
 				/* Remember the read position in case the queue is only being
