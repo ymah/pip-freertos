@@ -860,6 +860,12 @@ Queue_t * const pxQueue = ( Queue_t * ) xQueue;
 						the mutexes were given back in an order that is
 						different to that in which they were taken. */
 						printf("There is some tasks waiting for data VI...\r\n");
+						uint32_t * bufferToReceive = xGetTaskBuffer(pxCurrentTCB);
+						uint32_t whereToMap = xGetTaskWhereTo(pxCurrentTCB);
+
+						if(mapPageWrapper(bufferToReceive,*(uint32_t*)pxCurrentTCB,whereToMap))
+							printf("Error in mapping buffer for queue\r\n");
+
 						queueYIELD_IF_USING_PREEMPTION();
 					}
 					else
@@ -929,6 +935,11 @@ Queue_t * const pxQueue = ( Queue_t * ) xQueue;
 				is also a higher priority task in the pending ready list. */
 				if( xTaskResumeAll() == pdFALSE )
 				{
+					uint32_t * bufferToReceive = xGetTaskBuffer(pxCurrentTCB);
+					uint32_t whereToMap = xGetTaskWhereTo(pxCurrentTCB);
+
+					if(mapPageWrapper(bufferToReceive,*(uint32_t*)pxCurrentTCB,whereToMap))
+						printf("Error in mapping buffer for queue\r\n");
 					portYIELD_WITHIN_API();
 				}
 			}
@@ -1733,7 +1744,12 @@ Queue_t * const pxQueue = ( Queue_t * ) xQueue;
 				prvUnlockQueue( pxQueue );
 				if( xTaskResumeAll() == pdFALSE )
 				{
+					printf("3\r\n");
+					uint32_t * bufferToReceive = xGetTaskBuffer(pxCurrentTCB);
+					uint32_t whereToMap = xGetTaskWhereTo(pxCurrentTCB);
 
+					if(mapPageWrapper(bufferToReceive,*(uint32_t*)pxCurrentTCB,whereToMap))
+						printf("Error in mapping buffer for queue\r\n");
 					portYIELD_WITHIN_API();
 				}
 				else
