@@ -744,7 +744,7 @@ extern "C" {
 #endif
 
 #ifndef mtCOVERAGE_TEST_MARKER
-	#define mtCOVERAGE_TEST_MARKER()
+	#define mtCOVERAGE_TEST_MARKER() 
 #endif
 
 #ifndef mtCOVERAGE_TEST_DELAY

@@ -109,15 +109,17 @@ void queueSendService(uint32_t data2){
   if(Pip_MapPageWrapper(dataToSend,partitionCaller,itemToQueue))
     printf("Error in remapping datas into sender\r\n");
 
+  if(Pip_MapPageWrapper(dataCall,partitionCaller,data2)){
+      printf("Error in mapping service result\r\n");
+  }
+
   uint32_t queueRes;
   queueRes= xQueueSend(queueToSend,(void*)interBuffer,tickToWait);
 
 
   printf("Message waiting %d\r\n",uxQueueMessagesWaiting(queueToSend));
 
-  if(Pip_MapPageWrapper(dataCall,partitionCaller,data2)){
-    printf("Error in mapping service result\r\n");
-  }
+
   printf("Resuming partition after sending\r\n",queue);
   enableSerialInChild();
   getFunctionCallInfo();

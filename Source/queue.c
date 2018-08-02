@@ -762,21 +762,27 @@ Queue_t * const pxQueue = ( Queue_t * ) xQueue;
 								kernel takes care of that. */
 
 								printf("There is some tasks waiting for data III...\r\n");
-								uint32_t * bufferToReceive = xGetTaskBuffer(pxUnblockedTCB);
-								uint32_t whereToMap = xGetTaskWhereTo(pxUnblockedTCB);
-								prvCopyDataFromQueue( pxQueue, bufferToReceive );
+								uint32_t * bufferToReceiveRec = xGetTaskBuffer(pxUnblockedTCB);
+								uint32_t whereToMapRec = xGetTaskWhereTo(pxUnblockedTCB);
+
+								uint32_t * bufferToReceiveSen = xGetTaskBuffer(pxCurrentTCB);
+								uint32_t whereToMapSen = xGetTaskWhereTo(pxCurrentTCB);
+
+								prvCopyDataFromQueue( pxQueue, bufferToReceiveRec );
 
 								uint32_t * resReceiver = (uint32_t *)Pip_RemoveVAddr(*(uint32_t*)pxUnblockedTCB,0x600000); /*allocPage();*/
 								uint32_t * resSender = (uint32_t *)Pip_RemoveVAddr(*(uint32_t*)pxCurrentTCB,0x600000); /*allocPage();*/
 								*resReceiver = 1;
 								*resSender = 1;
 								if(mapPageWrapper(resReceiver,*(uint32_t*)pxUnblockedTCB,0x600000))
-									printf("Error in mapping result queue\r\n");
+									printf("Error in mapping result queue for %x\r\n",pxUnblockedTCB);
 								if(mapPageWrapper(resSender,*(uint32_t*)pxCurrentTCB,0x600000))
-										printf("Error in mapping result queue\r\n");
+										printf("Error in mapping result queue %x\r\n",pxCurrentTCB);
 
-								if(mapPageWrapper(bufferToReceive,*(uint32_t*)pxUnblockedTCB,whereToMap))
+								if(mapPageWrapper(bufferToReceiveRec,*(uint32_t*)pxUnblockedTCB,whereToMapRec))
 									printf("Error in mapping buffer for queue\r\n");
+								if(mapPageWrapper(bufferToReceiveSen,*(uint32_t*)pxCurrentTCB,whereToMapSen))
+										printf("Error in mapping buffer for queue\r\n");
 
 								queueYIELD_IF_USING_PREEMPTION();
 							}
@@ -817,24 +823,27 @@ Queue_t * const pxQueue = ( Queue_t * ) xQueue;
 							this from within the critical section - the kernel
 							takes care of that. */
 							printf("There is some tasks waiting for data IV...\r\n");
-							uint32_t * bufferToReceive = xGetTaskBuffer(pxUnblockedTCB);
+							uint32_t * bufferToReceiveRec = xGetTaskBuffer(pxUnblockedTCB);
+							uint32_t whereToMapRec = xGetTaskWhereTo(pxUnblockedTCB);
 
-							uint32_t whereToMap = xGetTaskWhereTo(pxUnblockedTCB);
-							prvCopyDataFromQueue( pxQueue, bufferToReceive );
+							uint32_t * bufferToReceiveSen = xGetTaskBuffer(pxCurrentTCB);
+							uint32_t whereToMapSen = xGetTaskWhereTo(pxCurrentTCB);
+
+							prvCopyDataFromQueue( pxQueue, bufferToReceiveRec );
 
 							uint32_t * resReceiver = (uint32_t *)Pip_RemoveVAddr(*(uint32_t*)pxUnblockedTCB,0x600000); /*allocPage();*/
 							uint32_t * resSender = (uint32_t *)Pip_RemoveVAddr(*(uint32_t*)pxCurrentTCB,0x600000); /*allocPage();*/
-
 							*resReceiver = 1;
 							*resSender = 1;
-
 							if(mapPageWrapper(resReceiver,*(uint32_t*)pxUnblockedTCB,0x600000))
-								printf("Error in mapping result queue\r\n");
+								printf("Error in mapping result queue for %x\r\n",pxUnblockedTCB);
 							if(mapPageWrapper(resSender,*(uint32_t*)pxCurrentTCB,0x600000))
-									printf("Error in mapping result queue\r\n");
+									printf("Error in mapping result queue %x\r\n",pxCurrentTCB);
 
-							if(mapPageWrapper(bufferToReceive,*(uint32_t*)pxUnblockedTCB,whereToMap))
+							if(mapPageWrapper(bufferToReceiveRec,*(uint32_t*)pxUnblockedTCB,whereToMapRec))
 								printf("Error in mapping buffer for queue\r\n");
+							if(mapPageWrapper(bufferToReceiveSen,*(uint32_t*)pxCurrentTCB,whereToMapSen))
+									printf("Error in mapping buffer for queue\r\n");
 
 							queueYIELD_IF_USING_PREEMPTION();
 						}
@@ -1526,7 +1535,7 @@ Queue_t * const pxQueue = ( Queue_t * ) xQueue;
 		{
 			/* Is there data in the queue now?  To be running the calling task
 			must be	the highest priority task wanting to access the queue. */
-
+			printf("Message waiting %d\r\n",pxQueue->uxMessagesWaiting);
 			if( pxQueue->uxMessagesWaiting > ( UBaseType_t ) 0 )
 			{
 				/* Remember the read position in case the queue is only being
@@ -1562,28 +1571,37 @@ Queue_t * const pxQueue = ( Queue_t * ) xQueue;
 						// TCB_t * tcbToSwitch = (TCB_t*)pxQueue->xTasksWaitingToReceive.pxIndex->pvOwner;
 						// printf("tcbToSwitch %x\r\n",*(uint32_t*)(tcbToSwitch));
 						printf("There is task waiting\r\n");
-						uint32_t * pxUnblockedTCB = (uint32_t*)listGET_OWNER_OF_HEAD_ENTRY(&( pxQueue->xTasksWaitingToReceive ));
+
+						uint32_t * pxUnblockedTCB = (uint32_t*)listGET_OWNER_OF_HEAD_ENTRY(&( pxQueue->xTasksWaitingToSend ));
+
 						configASSERT(pxUnblockedTCB);
+						printf("unblock %x\r\n",pxUnblockedTCB);
 						printf("Receive unblocked TCB %x ?\r\n",*(uint32_t*)pxUnblockedTCB);
+
 						if( xTaskRemoveFromEventList( &( pxQueue->xTasksWaitingToSend ) ) == pdTRUE )
 						{
 							printf("There is some tasks waiting for data I...\r\n");
-							uint32_t * bufferToReceive = xGetTaskBuffer(pxUnblockedTCB);
-							uint32_t whereToMap = xGetTaskWhereTo(pxUnblockedTCB);
-							prvCopyDataFromQueue( pxQueue, bufferToReceive );
+							uint32_t * bufferToReceiveRec = xGetTaskBuffer(pxUnblockedTCB);
+							uint32_t whereToMapRec = xGetTaskWhereTo(pxUnblockedTCB);
+
+							uint32_t * bufferToReceiveSen = xGetTaskBuffer(pxCurrentTCB);
+							uint32_t whereToMapSen = xGetTaskWhereTo(pxCurrentTCB);
+
+							prvCopyDataFromQueue( pxQueue, bufferToReceiveRec );
 
 							uint32_t * resReceiver = (uint32_t *)Pip_RemoveVAddr(*(uint32_t*)pxUnblockedTCB,0x600000); /*allocPage();*/
 							uint32_t * resSender = (uint32_t *)Pip_RemoveVAddr(*(uint32_t*)pxCurrentTCB,0x600000); /*allocPage();*/
 							*resReceiver = 1;
 							*resSender = 1;
 							if(mapPageWrapper(resReceiver,*(uint32_t*)pxUnblockedTCB,0x600000))
-								printf("Error in mapping result queue\r\n");
+								printf("Error in mapping result queue for %x\r\n",pxUnblockedTCB);
 							if(mapPageWrapper(resSender,*(uint32_t*)pxCurrentTCB,0x600000))
-									printf("Error in mapping result queue\r\n");
+									printf("Error in mapping result queue %x\r\n",pxCurrentTCB);
 
-							if(mapPageWrapper(bufferToReceive,*(uint32_t*)pxUnblockedTCB,whereToMap))
+							if(mapPageWrapper(bufferToReceiveRec,*(uint32_t*)pxUnblockedTCB,whereToMapRec))
 								printf("Error in mapping buffer for queue\r\n");
-
+							if(mapPageWrapper(bufferToReceiveSen,*(uint32_t*)pxCurrentTCB,whereToMapSen))
+									printf("Error in mapping buffer for queue\r\n");
 							queueYIELD_IF_USING_PREEMPTION();
 						}
 						else
@@ -1615,9 +1633,13 @@ Queue_t * const pxQueue = ( Queue_t * ) xQueue;
 						{
 							/* The task waiting has a higher priority than this task. */
 							printf("There is some tasks waiting for data II...\r\n");
-							uint32_t * bufferToReceive = xGetTaskBuffer(pxUnblockedTCB);
-							uint32_t whereToMap = xGetTaskWhereTo(pxUnblockedTCB);
-							prvCopyDataFromQueue( pxQueue, bufferToReceive );
+							uint32_t * bufferToReceiveRec = xGetTaskBuffer(pxUnblockedTCB);
+							uint32_t whereToMapRec = xGetTaskWhereTo(pxUnblockedTCB);
+
+							uint32_t * bufferToReceiveSen = xGetTaskBuffer(pxCurrentTCB);
+							uint32_t whereToMapSen = xGetTaskWhereTo(pxCurrentTCB);
+
+							prvCopyDataFromQueue( pxQueue, bufferToReceiveRec );
 
 							uint32_t * resReceiver = (uint32_t *)Pip_RemoveVAddr(*(uint32_t*)pxUnblockedTCB,0x600000); /*allocPage();*/
 							uint32_t * resSender = (uint32_t *)Pip_RemoveVAddr(*(uint32_t*)pxCurrentTCB,0x600000); /*allocPage();*/
@@ -1625,12 +1647,15 @@ Queue_t * const pxQueue = ( Queue_t * ) xQueue;
 							*resSender = 1;
 
 							if(mapPageWrapper(resReceiver,*(uint32_t*)pxUnblockedTCB,0x600000))
-								printf("Error in mapping result queue\r\n");
+								printf("Error in mapping result queue for %x\r\n",pxUnblockedTCB);
 							if(mapPageWrapper(resSender,*(uint32_t*)pxCurrentTCB,0x600000))
-									printf("Error in mapping result queue\r\n");
+									printf("Error in mapping result queue %x\r\n",pxCurrentTCB);
 
-							if(mapPageWrapper(bufferToReceive,*(uint32_t*)pxUnblockedTCB,whereToMap))
+							if(mapPageWrapper(bufferToReceiveRec,*(uint32_t*)pxUnblockedTCB,whereToMapRec))
 								printf("Error in mapping buffer for queue\r\n");
+							if(mapPageWrapper(bufferToReceiveSen,*(uint32_t*)pxCurrentTCB,whereToMapSen))
+									printf("Error in mapping buffer for queue\r\n");
+
 							queueYIELD_IF_USING_PREEMPTION();
 						}
 						else
@@ -1676,7 +1701,7 @@ Queue_t * const pxQueue = ( Queue_t * ) xQueue;
 
 		/* Interrupts and other tasks can send to and receive from the queue
 		now the critical section has been exited. */
-
+		printf("1\r\n");
 		vTaskSuspendAll();
 		prvLockQueue( pxQueue );
 
@@ -1708,6 +1733,7 @@ Queue_t * const pxQueue = ( Queue_t * ) xQueue;
 				prvUnlockQueue( pxQueue );
 				if( xTaskResumeAll() == pdFALSE )
 				{
+
 					portYIELD_WITHIN_API();
 				}
 				else
@@ -1718,6 +1744,7 @@ Queue_t * const pxQueue = ( Queue_t * ) xQueue;
 			else
 			{
 				/* Try again. */
+					printf("2\r\n");
 				prvUnlockQueue( pxQueue );
 				( void ) xTaskResumeAll();
 			}
@@ -1725,6 +1752,7 @@ Queue_t * const pxQueue = ( Queue_t * ) xQueue;
 		else
 		{
 			prvUnlockQueue( pxQueue );
+				printf("4\r\n");
 			( void ) xTaskResumeAll();
 			traceQUEUE_RECEIVE_FAILED( pxQueue );
 			return errQUEUE_EMPTY;
