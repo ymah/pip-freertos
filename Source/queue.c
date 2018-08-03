@@ -760,7 +760,7 @@ Queue_t * const pxQueue = ( Queue_t * ) xQueue;
 								our own so yield immediately.  Yes it is ok to
 								do this from within the critical section - the
 								kernel takes care of that. */
-
+								--( pxQueue->uxMessagesWaiting );
 								printf("There is some tasks waiting for data III...\r\n");
 								uint32_t * bufferToReceiveRec = xGetTaskBuffer(pxUnblockedTCB);
 								uint32_t whereToMapRec = xGetTaskWhereTo(pxUnblockedTCB);
@@ -822,6 +822,7 @@ Queue_t * const pxQueue = ( Queue_t * ) xQueue;
 							our own so yield immediately.  Yes it is ok to do
 							this from within the critical section - the kernel
 							takes care of that. */
+							--( pxQueue->uxMessagesWaiting );
 							printf("There is some tasks waiting for data IV...\r\n");
 							uint32_t * bufferToReceiveRec = xGetTaskBuffer(pxUnblockedTCB);
 							uint32_t whereToMapRec = xGetTaskWhereTo(pxUnblockedTCB);
@@ -859,6 +860,7 @@ Queue_t * const pxQueue = ( Queue_t * ) xQueue;
 						executed if the task was holding multiple mutexes and
 						the mutexes were given back in an order that is
 						different to that in which they were taken. */
+						--( pxQueue->uxMessagesWaiting );
 						printf("There is some tasks waiting for data VI...\r\n");
 						uint32_t * bufferToReceive = xGetTaskBuffer(pxCurrentTCB);
 						uint32_t whereToMap = xGetTaskWhereTo(pxCurrentTCB);
