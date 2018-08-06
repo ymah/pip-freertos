@@ -708,38 +708,11 @@ uint32_t xTaskPartitionCreate(uint32_t base, uint32_t length,
 
 static int startPartition= 0;
 
-
-void enableSerialInChild(){
-
-		//printf("Mapping UART { 0x%x , 0x%x } in child 0x%x\r\n",UART_MMIO_Base,UART_PCI_Base,pxCurrentTCB->pxTopOfStack);
-		mapPageWrapper((uint32_t)EC_BASE,(uint32_t)pxCurrentTCB->pxTopOfStack,EC_BASE);
-		mapPageWrapper((uint32_t)UART_MMIO_BSE,(uint32_t)pxCurrentTCB->pxTopOfStack,UART_MMIO_BSE);
-		mapPageWrapper((uint32_t)UART_PCI_BSE,(uint32_t)pxCurrentTCB->pxTopOfStack,UART_PCI_BSE);
-		//
-
-		//
-		mapPageWrapper((uint32_t) 0xE00AA000,(uint32_t*) pxCurrentTCB->pxTopOfStack, 0xE00AA000);
-		mapPageWrapper((uint32_t) 0x90006000,(uint32_t*) pxCurrentTCB->pxTopOfStack, 0x90006000);
-		mapPageWrapper((uint32_t) 0x90007000,(uint32_t*) pxCurrentTCB->pxTopOfStack, 0x90007000);
+void vTaskCheckIfProtected(){
+	if(!pxCurrentTCB->typeOfTask)
+		vTaskSwitchContext();
 }
 
-void disableSerialInChild(){
-	if(!startPartition)
-		return ;
-
-	Pip_RemoveVAddr((uint32_t)pxCurrentTCB->pxTopOfStack,EC_BASE);
-	Pip_RemoveVAddr((uint32_t)pxCurrentTCB->pxTopOfStack,UART_MMIO_BSE);
-	Pip_RemoveVAddr((uint32_t)pxCurrentTCB->pxTopOfStack,UART_PCI_BSE);
-
-	//
-	Pip_RemoveVAddr((uint32_t)pxCurrentTCB->pxTopOfStack,0xE00AA000);
-	Pip_RemoveVAddr((uint32_t)pxCurrentTCB->pxTopOfStack,0x90006000);
-	Pip_RemoveVAddr((uint32_t)pxCurrentTCB->pxTopOfStack,0x90007000);
-
-
-
-	//printf("Getting back serial %x %x from %x\r\n",UART_MMIO_Base,UART_PCI_Base,pxCurrentTCB->pxTopOfStack);
-}
 uint32_t xTaskSwitchToProtectedTask(){
 
 	//printf("Handle if the task is protected\r\n");
@@ -750,15 +723,15 @@ uint32_t xTaskSwitchToProtectedTask(){
 			//printf("Timer Switching to protected task %x\r\n",(uint32_t)pxCurrentTCB->pxTopOfStack);
 			if(pxCurrentTCB->vidt->flags){
 				//printf("Resuming partition \r\n");
-				enableSerialInChild();
+
 				Pip_Resume((uint32_t*)pxCurrentTCB->pxTopOfStack,1);
 			}
-			enableSerialInChild();
+
 			Pip_Notify((uint32_t) pxCurrentTCB->pxTopOfStack, 33, 0, 0);
 		}else{
 			printf("Starting protected task %x\r\n",(uint32_t)pxCurrentTCB->pxTopOfStack);
 			pxCurrentTCB->started = 1;
-			enableSerialInChild();
+
 			startPartition = 1;
 			Pip_Notify((uint32_t) pxCurrentTCB->pxTopOfStack, 0, 0, 0);
 		}
@@ -2443,7 +2416,7 @@ void vTaskSwitchContext(void) {
 			if(pxCurrentTCB->started)
 			{
 				//printf("Resume Partition %x\r\n",pxCurrentTCB->pxTopOfStack);
-				enableSerialInChild();
+
 				if(pxCurrentTCB->vidt->flags){
 					//printf("Check if there is any event for this task %x\r\n",*(uint32_t*)(pxCurrentTCB->xEventListItem.pvOwner));
 					//printf("Resume %x\r\n",*(uint32_t*)pxCurrentTCB);
@@ -2455,7 +2428,7 @@ void vTaskSwitchContext(void) {
 				printf("Starting Partition %x\r\n",pxCurrentTCB->pxTopOfStack);
 				pxCurrentTCB->started = 1;
 				printf("Starting\r\n");
-				enableSerialInChild();
+
 				Pip_VSTI();
 				startPartition = 1;
 				Pip_Notify((uint32_t) pxCurrentTCB->pxTopOfStack, 0, 0, 0);

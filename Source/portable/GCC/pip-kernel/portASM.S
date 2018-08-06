@@ -106,10 +106,10 @@
 
 .align 4
 .func vPortYieldCall
+.extern vTaskCheckIfProtected
 vPortYieldCall:
 	/* Save general purpose registers. */
 	pusha
-	call disableSerialInChild
 	.if configSUPPORT_FPU == 1
 
 		/* If the task has a buffer allocated to save the FPU context then save
@@ -126,7 +126,8 @@ vPortYieldCall:
 		push	pucPortTaskFPUContextBuffer
 
 	.endif /* configSUPPORT_FPU */
-
+	
+	call vTaskCheckIfProtected
 	/* Find the TCB. */
 	movl 	pxCurrentTCB, %eax
 
@@ -203,13 +204,11 @@ vPortAPICErrorHandlerWrapper:
 .func vPortTimerHandler
 .extern start_time
 .extern printInfo
-.extern disableSerialInChild
 vPortTimerHandler:
 
 	/* Save general purpose registers. */
 
 	call Pip_VCLI
-	call disableSerialInChild
 	/*pusha*/
 	pusha
 

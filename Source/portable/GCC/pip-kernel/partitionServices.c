@@ -19,8 +19,6 @@ int checkAccess(){
   return 1;
 }
 
-extern enableSerialInChild();
-extern disableSerialInChild();
 uint32_t * partitionCaller = NULL;
 uint32_t * returnFunctionService = NULL;
 
@@ -65,7 +63,7 @@ void queueCreateService(uint32_t data2){
     printf("Error in mapping service result\r\n");
   }
   printf("resuming\r\n");
-  enableSerialInChild();
+
   setFunctionCallInfo();
   resume(partitionCaller, 1);
 }
@@ -121,7 +119,7 @@ void queueSendService(uint32_t data2){
 
 
   printf("Resuming partition after sending\r\n",queue);
-  enableSerialInChild();
+
   getFunctionCallInfo();
   *returnFunctionService = queueRes;
   setFunctionCallInfo();
@@ -170,7 +168,7 @@ void queueReceiveService(uint32_t data2){
     printf("Error in mapping service result\r\n");
   }
   printf("Resuming partition after receiving\n");
-  enableSerialInChild();
+
   getFunctionCallInfo();
   *(uint32_t*)returnFunctionService = returnQueue;
   setFunctionCallInfo();
@@ -205,7 +203,7 @@ void sbrkService(uint32_t data2){
     printf("Error in mapping service result\r\n");
   }
   printf("return from sbrk service\r\n" );
-  enableSerialInChild();
+
   setFunctionCallInfo();
   resume(partitionCaller, 1);
 
@@ -242,7 +240,7 @@ void channelService(uint32_t data2){
   }
 
   printf("return from channelCom service service\r\n" );
-  enableSerialInChild();
+
   setFunctionCallInfo();
   resume(partitionCaller, 1);
 
@@ -252,7 +250,6 @@ void channelService(uint32_t data2){
 
 INTERRUPT_HANDLER(serviceRoutineAsm,serviceRoutine)
   Pip_VCLI();
-  disableSerialInChild();
   printf("Starting service data1 %d, data2 %x \r\n",data1,data2);
 
 
