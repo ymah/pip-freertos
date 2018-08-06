@@ -70,31 +70,6 @@
 #include <pip/debug.h>
 #include <pip/paging.h>
 #include <pip/compat.h>
-#include "dhry.h"
-#include "aes.h"
-#include "cpuidh.h"
-
-#include "CommonStructure.h"
-#include "MyAppConfig.h"
-
-#include "UART_DMA.h"
-#include "GPIO_I2C.h"
-
-#include <Galileo_Gen2_Board.h>
-#include <Quark_x1000_support.h>
-/*
-#include "NWManager.h"
-#include "Internal_Communication.h"
-#include "CommonStructure.h"
-#include "MyAppConfig.h"
-#include "TokenValidator.h"
-#include "AdminManager.h"
-#include "ConfigManager.h"
-#include "KeyManager.h"
-*/
-
-
-
 
 
 
@@ -208,22 +183,10 @@ void parse_bootinfo(pip_fpinfo* bootinfo)
 	return;
 }
 
-uint32_t phy_dmaBuffer;
-uint32_t vDmaBuffer;
-uint32_t NW_vDmaBuffer;
-
-TaskHandle_t owner;
-TaskHandle_t NWManager;
-TaskHandle_t sp1;
-TaskHandle_t sp2;
-TaskHandle_t sp3;
 void main()
 {
 
-	/* Init the UART, GPIO, etc. */
-
-	printf("Hardware set up \r\n");
-	pip_fpinfo * bootinfo = (pip_fpinfo*)0xFFFFC000;
+    pip_fpinfo * bootinfo = (pip_fpinfo*)0xFFFFC000;
 	printf("Hello I'm FreeRTOS\r\n");
 	printf("We're going to start the Real-time \r\n");
 
@@ -234,201 +197,10 @@ void main()
 	uint32_t paging = initPaging((void*)bootinfo->membegin,(void*)bootinfo->memend);
 	//Creating protected domains
 
-	//domain 1
-
-	uint32_t size;
-
-	vDmaBuffer = allocPage();
-	phy_dmaBuffer = 0xE2D7000 - ( vDmaBuffer - bootinfo->membegin );
-	NW_vDmaBuffer = 0xFFFEC000;
-
-
-
-	printf("Create Network Manager partition 0x%x\r\n",NWManager);
-
-	QueueHandle_t xQueue_2NW    = Null;
-	QueueHandle_t xQueue_2OD_IC = Null;
-	QueueHandle_t xQueue_2SP1D_IC = Null;
-	QueueHandle_t xQueue_2SP2D_IC = Null;
-	QueueHandle_t xQueue_2SP3D_IC = Null;
-	printf("size of even_t %x\r\n",sizeof (event_t) );
-	xQueue_2NW  = xQueueCreate( mainQUEUE_LENGTH, sizeof (event_t) );
-	xQueue_2OD_IC  = xQueueCreate( mainQUEUE_LENGTH, sizeof (event_t) );
-	xQueue_2SP1D_IC  = xQueueCreate( mainQUEUE_LENGTH, sizeof (event_t) );
-	xQueue_2SP2D_IC  = xQueueCreate( mainQUEUE_LENGTH, sizeof (event_t) );
-	xQueue_2SP3D_IC  = xQueueCreate( mainQUEUE_LENGTH, sizeof (event_t) );
-	printf("List of queues %x %x %x %x %x, length %d, size %d\r\n",xQueue_2NW,xQueue_2OD_IC,xQueue_2SP1D_IC,xQueue_2SP2D_IC,xQueue_2SP3D_IC,mainQUEUE_LENGTH,sizeof(event_t));
-
-	if( xQueue_2NW   == Null
-		&& xQueue_2OD_IC == Null
-		&& xQueue_2SP1D_IC == Null
-		&& xQueue_2SP2D_IC == Null
-		&& xQueue_2SP3D_IC == Null )
-	{
-		printf("Failure during Queue creation\r\n");
-		for(;;);
-	}else{
-		printf("Queue created\r\n");
-	}
-
-	// MUST set the dma_buffer before hardware setup
-	// TODO add protection to ensure dma_buffer setup before hardware initialization
-	set_dma_buffer(phy_dmaBuffer);
-	prvSetupHardware();
-
-	// map queues to owner domain
-	uint32_t queueOwner = allocPage();
-	*(uint32_t*)(queueOwner+0x4) = xQueue_2NW;
-	*(uint32_t*)(queueOwner+0x8) = xQueue_2OD_IC;
-	*(uint32_t*)(queueOwner+0xC) = xQueue_2SP1D_IC;
-	*(uint32_t*)(queueOwner+0x10) = xQueue_2SP2D_IC;
-	*(uint32_t*)(queueOwner+0x14) = xQueue_2SP3D_IC;
-
-
-	printf("Mapped into Owner\r\n");
-
-	// map queues to network manager domain
-	uint32_t queueNwMgr = allocPage();
-	*(uint32_t*)(queueNwMgr+0x4) = xQueue_2NW;
-	*(uint32_t*)(queueNwMgr+0x8) = xQueue_2OD_IC;
-	*(uint32_t*)(queueNwMgr+0xC) = xQueue_2SP1D_IC;
-	*(uint32_t*)(queueNwMgr+0x10) = xQueue_2SP2D_IC;
-	*(uint32_t*)(queueNwMgr+0x14) = xQueue_2SP3D_IC;
-	*(uint32_t*)(queueNwMgr+0x18) = phy_dmaBuffer;
-	*(uint32_t*)(queueNwMgr+0x1C) = NW_vDmaBuffer;
-	printf("Dma Buffer\t\t\t\t\t%x\r\n", vDmaBuffer);
-	printf("v Dma Buffer\t\t\t\t\t%x\r\n", NW_vDmaBuffer);
-
-	printf("Mapped into NW mngr\r\n");
-	// map queues to sp1 domain
-	uint32_t queueSP1 = allocPage();
-	*(uint32_t*)(queueSP1+0x4) = xQueue_2NW;
-	*(uint32_t*)(queueSP1+0x8) = xQueue_2OD_IC;
-	*(uint32_t*)(queueSP1+0xC) = xQueue_2SP1D_IC;
-
-
-	printf("Mapped into SP1\r\n");
-
-
-	// map queues to sp1 domain
-	uint32_t queueSP2 = allocPage();
-	*(uint32_t*)(queueSP2+0x4) = xQueue_2NW;
-	*(uint32_t*)(queueSP2+0x8) = xQueue_2OD_IC;
-	*(uint32_t*)(queueSP2+0xC) = xQueue_2SP2D_IC;
-
-	printf("Mapped into SP1\r\n");
-	// map queues to sp3 domain
-	uint32_t queueSP3 = allocPage();
-	*(uint32_t*)(queueSP3+0x4) = xQueue_2NW;
-	*(uint32_t*)(queueSP3+0x8) = xQueue_2OD_IC;
-	*(uint32_t*)(queueSP3+0xC) = xQueue_2SP3D_IC;
-
-
-	size = part1.end - part1.start;
-	xTaskCreateProtected(part1.start, "owner", size, queueOwner, configMAX_PRIORITIES - 1, &owner);
-	printf("Create Owner task partition 0x%x\r\n",owner);
-
-
-
-	size = part2.end - part2.start;
-	xTaskCreateProtected(part2.start, "sp1 task", size, queueSP1, configMAX_PRIORITIES - 2, &sp1);
-	printf("Create SP1 task partition 0x%x\r\n",sp1);
-
-
-
-	size = part3.end - part3.start;
-	xTaskCreateProtected(part3.start, "sp2 task", size, queueSP2, configMAX_PRIORITIES - 2, &sp2);
-	printf("Create SP2 task partition 0x%x\r\n",sp2);
-
-
-	size = part4.end - part4.start;
-	xTaskCreateProtected(part4.start, "sp3 task", size, queueSP3, configMAX_PRIORITIES - 2, &sp3);
-	printf("Create SP3 task partition 0x%x\r\n",sp3);
-
-	size = part5.end - part5.start;
-	xTaskCreateProtected(part5.start, "Network Manager", size, queueNwMgr, configMAX_PRIORITIES - 3, &NWManager);
-
-
-
-	printf("Queue mapped into childs\r\n");
-
-
-	// uint32_t UART_1_PCI_BASE         = 0xE00A5000;
-	// uint32_t UART_1_MMIO_BASE        = 0x9000B000;
-	//
-	// uint32_t UART_0_PCI_BASE         = 0xE00A1000;
-	// uint32_t UART_0_MMIO_BASE        = 0x9000F000;
-	// uint32_t DMA_0_MMIO_BASE         = 0x9000E000;
-	//
-	// uint32_t I2C_GPIO_CTRL_PCI_Base  = 0xE00AA000;
-	// uint32_t GPIO_CTRL_MMIO_BASE     = 0x90006000;
-	// uint32_t I2C_CTRL_MMIO_BASE      = 0x90007000;
-
-	/*
-	*  map hardware peripherals
-	*/
-	// map UART0
-	//mapPageWrapper((uint32_t) &xQueue_2SP3D_IC,(uint32_t) &sp3, 0xB000000);
-
-
-
-	mapPageWrapper((uint32_t) 0xE00A1000,*(uint32_t*)NWManager, 0xE00A1000);
-	mapPageWrapper((uint32_t) 0x9000F000,*(uint32_t*) NWManager, 0x9000F000);
-	mapPageWrapper((uint32_t) 0x9000E000,*(uint32_t*) NWManager, 0x9000E000);
-	//mapPageWrapper((uint32_t) 0xE00AA000,*(uint32_t*) NWManager, 0xE00AA000);
-	//mapPageWrapper((uint32_t) 0x90006000,*(uint32_t*) NWManager, 0x90006000);
-	//mapPageWrapper((uint32_t) 0x90007000,*(uint32_t*) NWManager, 0x90007000);
-
-	if(mapPageWrapper((uint32_t) vDmaBuffer,*(uint32_t*) NWManager, NW_vDmaBuffer))
-	{	printf("Failted to map dmaBuffers");
-		for(;;);
-	}
-
-	// Blink output leds
-	//test_Galileo_Gen2_Blink_IOs();
-
 	printf("Finished initialisation\r\n");
 	vTaskStartScheduler();
 	for(;;);
 }
-
-
-static void prvSetupHardware( void )
-{
-	// initialize debug serial port (UART1)
-	//vInitializeGalileo_debug_SerialPort();
-
-	// initialize client serial port (UART0)
-	vInitializeGalileo_client_SerialPort();
-	// initialize DMAC for client serial port for receiving
-	vInitializeGalileo_client_SerialPort_RCVR_DMA();
-
-	/*
-	 * initialize GPIO controller
-	 *
-	 * GPIO<0> to GPIO<7>
-	 */
-	vGalileoInitializeGpioController();
-
-	/*
-	 * initialize GPIO Legacy
-	 *
-	 * GPIO<8> and GPIO<9>  (Core Well)
-	 * and GPIO_SUS<0> to GPIO_SUS<5> (Resume Well)
-	 */
-	vGalileoInitializeLegacyGPIO();
-
-	/*
-	 * initialize IO 7 and IO 8
-	 * they are not connected to Quark SoC directly
-	 * instead they are connected to Expander 1 embedded on the Galileo Board
-	 */
-	Galileo_Gen2_Init_IO7_and_IO8();
-
-	/* Route Intel Galileo Board IOs (GPIO, UART, ... to IO header) */
-	vGalileoRoute_IOs();
-}
-
 
 
 void vApplicationMallocFailedHook(){

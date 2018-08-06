@@ -80,8 +80,6 @@ task.h is included from an application file. */
 #include "queue.h"
 #include "timers.h"
 
-#include "cpuidh.h"
-
 
 #if ( INCLUDE_xTimerPendFunctionCall == 1 ) && ( configUSE_TIMERS == 0 )
 	#error configUSE_TIMERS must be set to 1 to make the xTimerPendFunctionCall() function available.
@@ -254,7 +252,7 @@ BaseType_t xReturn = pdFAIL;
 	{
 		#if ( INCLUDE_xTimerGetTimerDaemonTaskHandle == 1 )
 		{
-			printf("Create the timer task, storing its handle in xTimerTaskHandle so it can be returned by the xTimerGetTimerDaemonTaskHandle() function.\r\n"); 
+			printf("Create the timer task, storing its handle in xTimerTaskHandle so it can be returned by the xTimerGetTimerDaemonTaskHandle() function.\r\n");
 			xReturn = xTaskCreate( prvTimerTask, "Tmr Svc", ( uint16_t ) configTIMER_TASK_STACK_DEPTH, NULL, ( ( UBaseType_t ) configTIMER_TASK_PRIORITY ) | portPRIVILEGE_BIT, &xTimerTaskHandle );
 		}
 		#else
@@ -489,6 +487,7 @@ BaseType_t xTimerListsWereSwitched;
 					block time to expire.  If a command arrived between the
 					critical section being exited and this yield then the yield
 					will not cause the task to block. */
+					printf("HERE?\r\n");
 					portYIELD_WITHIN_API();
 				}
 				else

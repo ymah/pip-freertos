@@ -89,7 +89,6 @@
 #include <pip/vidt.h>
 #include <pip/compat.h>
 #include <pip/fpinfo.h>
-#include "cpuidh.h"
 /* Lint e961 and e750 are suppressed as a MISRA exception justified because ther
  MPU ports require MPU_WRAPPERS_INCLUDED_FROM_API_FILE to be defined for the
  header files above, but not in this file, in order to generate the correct
