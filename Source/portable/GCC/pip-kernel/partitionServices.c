@@ -12,7 +12,7 @@
 #include "pip/api.h"
 #include "pip/compat.h"
 #include "partitionServices.h"
-
+#include "hal.h"
 
 extern void * pxCurrentTCB;
 int checkAccess(){
@@ -248,6 +248,41 @@ void channelService(uint32_t data2){
 
 
 
+void hardwareAccessService(uint32_t data2){
+
+  printf("Starting hardware acess service by %x\r\n",partitionCaller);
+
+
+  uint32_t * dataCall;
+  dataCall = (uint32_t*) Pip_RemoveVAddr(partitionCaller,data2);
+
+
+  uint32_t type = *(dataCall);
+  uint32_t address = *(dataCall+1);
+  uint32_t value = *(dataCall+2);
+  uint32_t size = *(dataCall+3);
+
+
+
+  *(dataCall+2) = hal_hardware_access();
+
+  if(Pip_MapPageWrapper(dataCall,partitionCaller,data2)){
+    printf("Error in mapping call informations\r\n");
+  }
+
+
+
+
+  printf("Access to hardware {%x,%x,%x,%x}\r\n",type,address,value,size);
+
+
+
+  printf("return from hardware access service service service\r\n" );
+  resume(partitionCaller, 1);
+
+}
+
+
 INTERRUPT_HANDLER(serviceRoutineAsm,serviceRoutine)
   Pip_VCLI();
   printf("Starting service data1 %d, data2 %x \r\n",data1,data2);
@@ -260,7 +295,7 @@ INTERRUPT_HANDLER(serviceRoutineAsm,serviceRoutine)
     printf("No rights for this partition\r\n");
   switch (data1) {
     case queueCreate:
-          queueCreateService(data2);
+      queueCreateService(data2);
       break;
     case queueSend:
       queueSendService(data2);
@@ -272,8 +307,11 @@ INTERRUPT_HANDLER(serviceRoutineAsm,serviceRoutine)
       sbrkService(data2);
       break;
     case channelCom:
-        channelService(data2);
-        break;
+      channelService(data2);
+      break;
+    case hardwareAccess:
+      hardwareAccessService(data2);
+      break;
     default:
       __asm__ volatile("call vPortTimerHandler");
   }
