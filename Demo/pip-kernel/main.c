@@ -310,19 +310,19 @@ void main()
 	printf("Mapped into SP1\r\n");
 
 
-	// map queues to sp1 domain
+	// map queues to sp2 domain
 	uint32_t queueSP2 = allocPage();
 	*(uint32_t*)(queueSP2+0x4) = xQueue_2NW;
 	*(uint32_t*)(queueSP2+0x8) = xQueue_2OD_IC;
 	*(uint32_t*)(queueSP2+0xC) = xQueue_2SP2D_IC;
 
-	printf("Mapped into SP1\r\n");
+	printf("Mapped into SP2\r\n");
 	// map queues to sp3 domain
 	uint32_t queueSP3 = allocPage();
 	*(uint32_t*)(queueSP3+0x4) = xQueue_2NW;
 	*(uint32_t*)(queueSP3+0x8) = xQueue_2OD_IC;
 	*(uint32_t*)(queueSP3+0xC) = xQueue_2SP3D_IC;
-
+	printf("Mapped into SP3\r\n");
 
 	size = part1.end - part1.start;
 	xTaskCreateProtected(part1.start, "owner", size, queueOwner, configMAX_PRIORITIES - 1, &owner);
