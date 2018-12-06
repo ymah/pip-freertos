@@ -40,8 +40,8 @@ typedef struct xQueueReceiveParameters_s xQueueReceiveParameters;
 #define queueReceive    0x17
 #define sbrk            0x18
 #define channelCom      0x19
-#define myout		0x20
-#define myin		0x21
+#define myout		        0x20
+#define myin		        0x21
 void initPartitionServices();
 
 #endif
