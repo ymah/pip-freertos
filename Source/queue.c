@@ -1462,28 +1462,24 @@ Queue_t * const pxQueue = ( Queue_t * ) xQueue;
 
 	for( ;; )
 	{
-		printf("Boucling in receive\r\n");
+		
 		taskENTER_CRITICAL();
 		{
 			/* Is there data in the queue now?  To be running the calling task
 			must be	the highest priority task wanting to access the queue. */
-			printf("Message waiting %d\r\n",pxQueue->uxMessagesWaiting);
 			if( pxQueue->uxMessagesWaiting > ( UBaseType_t ) 0 )
 			{
 				/* Remember the read position in case the queue is only being
 				peeked. */
 				pcOriginalReadPosition = pxQueue->u.pcReadFrom;
-				printf("There is something, copy data to %x in %x\r\n",*(uint32_t*)pxCurrentTCB,pcOriginalReadPosition);
-				prvCopyDataFromQueue( pxQueue, pvBuffer );
-				printf("Data copied into queue, let's resume some partition\r\n");
-				if( xJustPeeking == pdFALSE )
+			prvCopyDataFromQueue( pxQueue, pvBuffer );
+			if( xJustPeeking == pdFALSE )
 				{
 					traceQUEUE_RECEIVE( pxQueue );
 
 					/* Actually removing data, not just peeking. */
 					--( pxQueue->uxMessagesWaiting );
-					printf("Just peeking\r\n");
-					#if ( configUSE_MUTEXES == 1 )
+				#if ( configUSE_MUTEXES == 1 )
 					{
 						if( pxQueue->uxQueueType == queueQUEUE_IS_MUTEX )
 						{
@@ -1502,18 +1498,12 @@ Queue_t * const pxQueue = ( Queue_t * ) xQueue;
 					{
 						// TCB_t * tcbToSwitch = (TCB_t*)pxQueue->xTasksWaitingToReceive.pxIndex->pvOwner;
 						// printf("tcbToSwitch %x\r\n",*(uint32_t*)(tcbToSwitch));
-						printf("There is task waiting\r\n");
-
-						uint32_t * pxUnblockedTCB = (uint32_t*)listGET_OWNER_OF_HEAD_ENTRY(&( pxQueue->xTasksWaitingToSend ));
+							uint32_t * pxUnblockedTCB = (uint32_t*)listGET_OWNER_OF_HEAD_ENTRY(&( pxQueue->xTasksWaitingToSend ));
 
 						configASSERT(pxUnblockedTCB);
-						printf("unblock %x\r\n",pxUnblockedTCB);
-						printf("Receive unblocked TCB %x ?\r\n",*(uint32_t*)pxUnblockedTCB);
-
-						if( xTaskRemoveFromEventList( &( pxQueue->xTasksWaitingToSend ) ) == pdTRUE )
+							if( xTaskRemoveFromEventList( &( pxQueue->xTasksWaitingToSend ) ) == pdTRUE )
 						{
-							printf("There is some tasks waiting for data I...\r\n");
-							uint32_t * bufferToReceiveRec = xGetTaskBuffer(pxUnblockedTCB);
+						uint32_t * bufferToReceiveRec = xGetTaskBuffer(pxUnblockedTCB);
 							uint32_t whereToMapRec = xGetTaskWhereTo(pxUnblockedTCB);
 
 							uint32_t * bufferToReceiveSen = xGetTaskBuffer(pxCurrentTCB);
@@ -1602,7 +1592,7 @@ Queue_t * const pxQueue = ( Queue_t * ) xQueue;
 				}
 
 				taskEXIT_CRITICAL();
-				printf("Finished receiving\r\n");
+				//printf("Finished receiving\r\n");
 				return pdPASS;
 			}
 			else
