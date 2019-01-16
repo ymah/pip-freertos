@@ -1543,12 +1543,12 @@ Queue_t * const pxQueue = ( Queue_t * ) xQueue;
 
 	for( ;; )
 	{
-		printf("Boucling in receive\r\n");
+		//printf("Boucling in receive\r\n");
 		taskENTER_CRITICAL();
 		{
 			/* Is there data in the queue now?  To be running the calling task
 			must be	the highest priority task wanting to access the queue. */
-			printf("Message waiting %d\r\n",pxQueue->uxMessagesWaiting);
+			//printf("Message waiting %d\r\n",pxQueue->uxMessagesWaiting);
 			if( pxQueue->uxMessagesWaiting > ( UBaseType_t ) 0 )
 			{
 				/* Remember the read position in case the queue is only being

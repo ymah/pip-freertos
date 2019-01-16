@@ -59,12 +59,12 @@ void queueCreateService(uint32_t data2){
   queue = xQueueCreate(length,size_type);
   *(dataCall+2) = (uint32_t*) queue;
 
-  printf("Resuming partition with %x\r\n",queue);
+  //printf("Resuming partition with %x\r\n",queue);
 
   if(Pip_MapPageWrapper(dataCall,partitionCaller,data2)){
     printf("Error in mapping service result\r\n");
   }
-  printf("resuming\r\n");
+  //printf("resuming\r\n");
   enableSerialInChild();
   setFunctionCallInfo();
   resume(partitionCaller, 1);
@@ -133,16 +133,16 @@ void queueSendService(uint32_t data2){
 
 void queueReceiveService(uint32_t data2){
 
-  printf("Starting queueReceive services by %x\r\n",partitionCaller);
+  //printf("Starting queueReceive services by %x\r\n",partitionCaller);
   uint32_t * dataCall;
   dataCall = (uint32_t*) Pip_RemoveVAddr(partitionCaller,data2);
 
   uint32_t queue = *(dataCall);
-  printf("Queue is %x\r\n",queue);
+  //printf("Queue is %x\r\n",queue);
   uint32_t * bufferReceive = *(dataCall+1);
-  printf("Buffer to Receive is %x\r\n",bufferReceive);
+  //printf("Buffer to Receive is %x\r\n",bufferReceive);
   uint32_t tickToWait = *(dataCall+2);
-  printf("Tick to wait %x\r\n",tickToWait);
+  //printf("Tick to wait %x\r\n",tickToWait);
 
 
 
@@ -150,8 +150,8 @@ void queueReceiveService(uint32_t data2){
   void * buffer = (void*) Pip_RemoveVAddr(partitionCaller,bufferReceive);
   //void * buffer = (void*) bufferReceive;
 
-  printf("Buffer is %x\r\n",buffer);
-  printf("Queue for receiving is %x\r\n",queueToSend);
+  //printf("Buffer is %x\r\n",buffer);
+  //printf("Queue for receiving is %x\r\n",queueToSend);
 
   vSetTaskBuffer((uint32_t*)buffer,(uint32_t)bufferReceive);
 
@@ -163,13 +163,13 @@ void queueReceiveService(uint32_t data2){
 
 
 
-  printf("Data received\r\n");
+  //printf("Data received\r\n");
 
 
   if(Pip_MapPageWrapper(buffer,partitionCaller,bufferReceive)){
     printf("Error in mapping service result\r\n");
   }
-  printf("Resuming partition after receiving\n");
+  //printf("Resuming partition after receiving\n");
   enableSerialInChild();
   getFunctionCallInfo();
   *(uint32_t*)returnFunctionService = returnQueue;
@@ -253,7 +253,7 @@ void channelService(uint32_t data2){
 INTERRUPT_HANDLER(serviceRoutineAsm,serviceRoutine)
   Pip_VCLI();
   disableSerialInChild();
-  printf("Starting service data1 %d, data2 %x \r\n",data1,data2);
+  //printf("Starting service data1 %d, data2 %x \r\n",data1,data2);
 
 
   partitionCaller = *(uint32_t*)pxCurrentTCB;
