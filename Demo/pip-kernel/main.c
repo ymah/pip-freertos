@@ -331,22 +331,22 @@ void main()
 
 
 	size = part2.end - part2.start;
-	xTaskCreateProtected(part2.start, "sp1 task", size, queueSP1, configMAX_PRIORITIES - 2, &sp1);
+	xTaskCreateProtected(part2.start, "sp1 task", size, queueSP1, configMAX_PRIORITIES - 1, &sp1);
 	printf("Create SP1 task partition 0x%x\r\n",sp1);
 
 
 
 	size = part3.end - part3.start;
-	xTaskCreateProtected(part3.start, "sp2 task", size, queueSP2, configMAX_PRIORITIES - 2, &sp2);
+	xTaskCreateProtected(part3.start, "sp2 task", size, queueSP2, configMAX_PRIORITIES - 1, &sp2);
 	printf("Create SP2 task partition 0x%x\r\n",sp2);
 
 
 	size = part4.end - part4.start;
-	xTaskCreateProtected(part4.start, "sp3 task", size, queueSP3, configMAX_PRIORITIES - 2, &sp3);
+	xTaskCreateProtected(part4.start, "sp3 task", size, queueSP3, configMAX_PRIORITIES - 1, &sp3);
 	printf("Create SP3 task partition 0x%x\r\n",sp3);
 
 	size = part5.end - part5.start;
-	xTaskCreateProtected(part5.start, "Network Manager", size, queueNwMgr, configMAX_PRIORITIES - 3, &NWManager);
+	xTaskCreateProtected(part5.start, "Network Manager", size, queueNwMgr, configMAX_PRIORITIES - 1, &NWManager);
 
 
 
