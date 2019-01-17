@@ -1462,7 +1462,7 @@ Queue_t * const pxQueue = ( Queue_t * ) xQueue;
 
 	for( ;; )
 	{
-		
+
 		taskENTER_CRITICAL();
 		{
 			/* Is there data in the queue now?  To be running the calling task
@@ -1623,7 +1623,7 @@ Queue_t * const pxQueue = ( Queue_t * ) xQueue;
 
 		/* Interrupts and other tasks can send to and receive from the queue
 		now the critical section has been exited. */
-		printf("1\r\n");
+
 		vTaskSuspendAll();
 		prvLockQueue( pxQueue );
 
@@ -1655,7 +1655,6 @@ Queue_t * const pxQueue = ( Queue_t * ) xQueue;
 				prvUnlockQueue( pxQueue );
 				if( xTaskResumeAll() == pdFALSE )
 				{
-					printf("3\r\n");
 					uint32_t * bufferToReceive = xGetTaskBuffer(pxCurrentTCB);
 					uint32_t whereToMap = xGetTaskWhereTo(pxCurrentTCB);
 
@@ -1671,7 +1670,7 @@ Queue_t * const pxQueue = ( Queue_t * ) xQueue;
 			else
 			{
 				/* Try again. */
-					printf("2\r\n");
+
 				prvUnlockQueue( pxQueue );
 				( void ) xTaskResumeAll();
 			}
@@ -1679,7 +1678,7 @@ Queue_t * const pxQueue = ( Queue_t * ) xQueue;
 		else
 		{
 			prvUnlockQueue( pxQueue );
-				printf("4\r\n");
+
 			( void ) xTaskResumeAll();
 			traceQUEUE_RECEIVE_FAILED( pxQueue );
 			return errQUEUE_EMPTY;
