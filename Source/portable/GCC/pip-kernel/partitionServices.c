@@ -258,7 +258,7 @@ void inOutService(uint32_t data2,uint32_t type){
 	uint32_t port = *(dataCall);
 	uint32_t value = *(dataCall+1);
 
-	printf("PORT %x accessed by %x\r\n",port,partitionCaller);
+	//printf("PORT %x accessed by %x\r\n",port,partitionCaller);
 	if(type){
 		outl(port,value);
 	}else{
@@ -307,7 +307,7 @@ if(!checkAccess())
 		case myin:
 			inOutService(data2,0);
 			break;
-		
+
 		default:
 			__asm__ volatile("call vPortTimerHandler");
 	}
