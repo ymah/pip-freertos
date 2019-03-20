@@ -30,7 +30,7 @@
 /*  The fact that you are presently reading this means that you have had       */
 /*  knowledge of the CeCILL license and that you accept its terms.             */
 /*******************************************************************************/
-
+/*
 .section .partition1
 .incbin "Support_Files/partitions_images/part1.bin"
 .section .partition2
@@ -41,7 +41,7 @@
 .incbin "Support_Files/partitions_images/part4.bin"
 .section .partition5
 .incbin "Support_Files/partitions_images/part5.bin"
-/*
+
 .section .partition4
 .incbin "images/part4.bin"
 .section .partition5

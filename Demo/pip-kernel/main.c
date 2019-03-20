@@ -44,23 +44,23 @@
 #include "timers.h"
 
 /* Standard demo includes. */
-#include "blocktim.h"
-#include "flash_timer.h"
-#include "semtest.h"
-#include "GenQTest.h"
-#include "QPeek.h"
-#include "countsem.h"
-#include "dynamic.h"
-#include "QueueOverwrite.h"
-#include "QueueSet.h"
-#include "recmutex.h"
-#include "EventGroupsDemo.h"
-#include "death.h"
-#include "TimerDemo.h"
-#include "BlockQ.h"
-#include "flop.h"
-#include "TaskNotify.h"
-#include "IntQueue.h"
+//#include "blocktim.h"
+//#include "flash_timer.h"
+//#include "semtest.h"
+//#include "GenQTest.h"
+//#include "QPeek.h"
+//#include "countsem.h"
+//#include "dynamic.h"
+//#include "QueueOverwrite.h"
+//#include "QueueSet.h"
+//#include "recmutex.h"
+//#include "EventGroupsDemo.h"
+//#include "death.h"
+//#include "TimerDemo.h"
+//#include "BlockQ.h"
+//#include "flop.h"
+//#include "TaskNotify.h"
+//#include "IntQueue.h"
 #include "service.h"
 #include "queue.h"
 
@@ -70,6 +70,12 @@
 #include <pip/debug.h>
 #include <pip/paging.h>
 #include <pip/compat.h>
+
+
+
+
+//Configuration manager
+
 
 
 
@@ -114,9 +120,9 @@ static void prvRegTest1Entry( void *pvParameters );
 static void prvRegTest2Entry( void *pvParameters );
 
 /*
- * Perform any hardware/peripheral related initialisation necessary to run the
- * demo.
- */
+* Perform any hardware/peripheral related initialisation necessary to run the
+* demo.
+*/
 static void prvSetupHardware( void );
 
 /*
@@ -140,33 +146,6 @@ volatile uint32_t ulCheckLoops = 0;
 
 
 
-extern void* _partition1, *_epartition1;
-extern void* _partition2, *_epartition2;
-extern void* _partition3, *_epartition3;
-extern void* _partition4, *_epartition4;
-extern void* _partition5, *_epartition5;
-
-static const struct {uint32_t start, end;} part1 = {
-	(uint32_t)&_partition1, (uint32_t)&_epartition1,
-};
-
-
-static const struct {uint32_t start, end;} part2 = {
-	(uint32_t)&_partition2, (uint32_t)&_epartition2,
-};
-
-static const struct {uint32_t start, end;} part3 = {
-	(uint32_t)&_partition3, (uint32_t)&_epartition3,
-};
-
-static const struct {uint32_t start, end;} part4 = {
-	(uint32_t)&_partition4, (uint32_t)&_epartition4,
-};
-
-static const struct {uint32_t start, end;} part5 = {
-	(uint32_t)&_partition5, (uint32_t)&_epartition5,
-};
-
 void parse_bootinfo(pip_fpinfo* bootinfo)
 {
 	if(bootinfo->magic == FPINFO_MAGIC)
@@ -186,7 +165,7 @@ void parse_bootinfo(pip_fpinfo* bootinfo)
 void main()
 {
 
-    pip_fpinfo * bootinfo = (pip_fpinfo*)0xFFFFC000;
+	pip_fpinfo * bootinfo = (pip_fpinfo*)0xFFFFC000;
 	printf("Hello I'm FreeRTOS\r\n");
 	printf("We're going to start the Real-time \r\n");
 
